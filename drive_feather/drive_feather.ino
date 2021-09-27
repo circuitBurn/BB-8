@@ -1,12 +1,41 @@
 #include <Adafruit_NeoPixel.h>
+#include <SPI.h>
+#include <RH_RF69.h>
 
-#define PIN 11
+#include "Commands.h"
 
-Adafruit_NeoPixel body = Adafruit_NeoPixel(20, PIN, NEO_GRB + NEO_KHZ800);
+#define BUSY_SPK A0
+#define BUSY_PIN A1
+
+#define NEOPIXEL_PIN 11
+#define NEOPIXEL_COUNT 20
+#define RF69_FREQ 915.0
+
+#define RFM69_CS 8
+#define RFM69_INT 7
+#define RFM69_RST 4
+
+#define LED_PIN 11
+#define LED_COUNT 6
+#define BRIGHTNESS 255
+
+// Individual LED addresses
+#define LED_HP 0
+#define LED_PSI 1
+#define FRONT_LOGIC_1 2
+#define FRONT_LOGIC_2 3
+#define REAR_LOGIC_1 4
+#define REAR_LOGIC_2 5
+
+// Singleton instance of the radio driver
+RH_RF69 rf69(RFM69_CS, RFM69_INT);
+
+
+Adafruit_NeoPixel body = Adafruit_NeoPixel(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 unsigned long panel1Millis;
 int panel1State = 1;
-int r1 = 0; 
+int r1 = 0;
 int b1 = 0;
 
 unsigned long panel2Millis;
@@ -40,16 +69,54 @@ int b62 = 0;
 
 unsigned long lastMillis;
 
-void setup() {
+//int16_t packetnum = 0;  // packet counter, we increment per xmission
+
+void setup()
+{
+  //  Serial.begin(115200);
+  pinMode(RFM69_RST, OUTPUT);
+  digitalWrite(RFM69_RST, LOW);
+
+  // manual reset
+  digitalWrite(RFM69_RST, HIGH);
+  delay(10);
+  digitalWrite(RFM69_RST, LOW);
+  delay(10);
+
+  if (!rf69.init())
+  {
+    while (1)
+      ;
+  }
+
+  // Defaults after init are 434.0MHz, modulation GFSK_Rb250Fd250, +13dbM (for low power module)
+  // No encryption
+  if (!rf69.setFrequency(RF69_FREQ))
+  {
+    while (1)
+      ;
+  }
+
+  // If you are using a high power RF69 eg RFM69HW, you *must* set a Tx power with the
+  // ishighpowermodule flag set like this:
+  rf69.setTxPower(20, true); // range from 14-20 for power, 2nd arg must be true for 69HCW
+
+  // The encryption key has to be the same as the one in the server
+  uint8_t key[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+                   0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08
+                  };
+  rf69.setEncryptionKey(key);
 
   body.begin();
   body.show();
+
+  turnPSIOff();
 }
 
-void loop() {
-
-  if ((millis() - lastMillis) > 50) {
-
+void loop()
+{
+  if ((millis() - lastMillis) > 50)
+  {
     panel1();
     panel2();
     panel3();
@@ -60,15 +127,40 @@ void loop() {
     body.show();
 
     lastMillis = millis();
+  }
 
+  // Speaker light
+  int sound = analogRead(A0);
+  if (sound > 800)
+  {
+    turnPSIOn();
+  }
+  else if (sound < 790)
+  {
+    turnPSIOff();
+  }
+  else
+  {
+    turnPSIOff();
   }
 }
 
+void turnPSIOn()
+{
+  uint8_t data[] = "O";
+  rf69.send((uint8_t *)data, strlen(data));
+}
 
-void panel1() {
+void turnPSIOff()
+{
+  uint8_t data[] = "F";
+  rf69.send((uint8_t *)data, strlen(data));
+}
 
-  if (panel1State == 1 && b1 <= 255) {
-
+void panel1()
+{
+  if (panel1State == 1 && b1 <= 255)
+  {
     r1 ++;
     b1 += 8;
 
