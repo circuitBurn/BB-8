@@ -1,19 +1,20 @@
 #include "Arduino.h"
+#include <EEPROMex.h>
 #include "sbus.h"
 #include "DFRobotDFPlayerMini.h"
-#include <VarSpeedServo.h>
 #include "BTS7960.h"
 #include <PID_v1.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
+#include <Wire.h>
+#include <Adafruit_PWMServoDriver.h>
 
 #define domeSpinPWM1 10
 #define domeSpinPWM2 11
 
-#define leftDomeTiltServo 4
-#define rightDomeTiltServo 5
-#define MaxDomeTiltY 20
-#define MaxDomeTiltX 18
+#define DOME_POT A4
+#define MaxDomeTiltY 25
+#define MaxDomeTiltX 30
 
 #define RC_MIN 172
 #define RC_MAX 1811
@@ -31,6 +32,7 @@
 #define CH_DOME_SPIN 5
 #define CH_SOUND_TRIGGER 7
 #define CH_SOUND_BANK 8
+#define CH_DRIVES_EN 9
 
 // Main Drive
 #define DRIVE_R_PWM 13
@@ -58,9 +60,8 @@
 */
 
 // Dome
-#define DomeYEase .4 // Spead of front to back dome movement, higher == faster
-#define DomeXEase .7 // Speed of side to side domemovement, higher == faster
-#define DomeServoSpeed 180 // Speed that the servos will move
+#define DomeYEase 2 // Spead of front to back dome movement, higher == faster
+#define DomeXEase 2 // Speed of side to side domemovement, higher == faster
 
 // PID1 is for the side to side tilt
 double Pk1 = 14;
@@ -69,7 +70,7 @@ double Dk1 = 0.0;
 double Setpoint1, Input1, Output1, Output1a;
 PID PID1(&Input1, &Output1, &Setpoint1, Pk1, Ik1 , Dk1, DIRECT);
 
-// PID Setup - S2S stability
+// PID is for S2S stability
 double Pk2 = .5;
 double Ik2 = 0;
 double Dk2 = .01;
@@ -83,6 +84,13 @@ double Dk3 = 0;
 double Setpoint3, Input3, Output3, Output3a;
 PID PID3(&Input3, &Output3, &Setpoint3, Pk3, Ik3 , Dk3, DIRECT);
 
+// PID is for dome rotation
+double Pk4 = .5;
+double Ik4 = 0;
+double Dk4 = .01;
+double Setpoint4, Input4, Output4;
+PID PID4(&Input4, &Output4, &Setpoint4, Pk4, Ik4 , Dk4, DIRECT);
+
 // Sound
 int soundTriggerState;
 int lastSoundTriggerState = LOW;
@@ -90,28 +98,24 @@ bool soundTriggerLatched = false;
 unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 50;
 
+// Offsets
+float pitchOffset, rollOffset, potOffsetS2S, domeTiltPotOffset, domeSpinOffset;
+
 // Dome Servos
+Adafruit_PWMServoDriver servos = Adafruit_PWMServoDriver();
 int domeTiltXRaw, domeTiltYRaw;
 int domeTiltX, domeTiltY;
-
 double Joy2YPitch;
 int Joy2Ya, Joy2XLowOffset, Joy2XHighOffset, Joy2XLowOffsetA, Joy2XHighOffsetA, ServoLeft, ServoRight;
 double Joy2X, Joy2Y, LeftJoy2X, LeftJoy2Y, Joy2XEase, Joy2YEase, Joy2XEaseMap;
 double Joy2YEaseMap;
-double pitchOffset = -0.75;//4.4;
-double rollOffset = 5;
-
-// TODO:
-int s2sPot = 512;
-
-int potOffsetS2S = 3;
-int S2Spot;
 
 int domeRaw, domeSpeed;
-int s2sRaw, s2sSpeed;
+int S2Spot, s2sRaw, s2sSpeed;
 int driveRaw, driveSpeed;
 int flywheelRaw, flywheelSpeed;
 int soundBank, soundTriggerRaw, soundRaw;
+bool motorsEnabled = true;
 
 // SBUS
 SbusRx sbus_rx(&Serial2);
@@ -120,9 +124,8 @@ SbusRx sbus_rx(&Serial2);
 DFRobotDFPlayerMini myDFPlayer;
 
 // Neck Servos
-VarSpeedServo leftServo;
-VarSpeedServo rightServo;
-bool servosEnabled = false;
+//Servo leftServo;
+//Servo rightServo;
 
 // BTS7960 Motor Drivers
 BTS7960 driveController(DRIVE_EN, DRIVE_L_PWM, DRIVE_R_PWM);
@@ -132,6 +135,13 @@ BTS7960 flywheelController(DRIVE_EN, FLY_L_PWM, FLY_R_PWM);
 // IMU
 Adafruit_BNO055 bno = Adafruit_BNO055(-1, 0x28);
 float pitch, roll;
+
+const int numReadings = 15;
+
+int readings[numReadings];      // the readings from the analog input
+int readIndex = 0;              // the index of the current reading
+int total = 0;                  // the running total
+int average = 0;                // the average
 
 void setup()
 {
@@ -156,10 +166,10 @@ void setup()
   pinMode(domeSpinPWM2, OUTPUT);
 
   // Servos
-  leftServo.attach(leftDomeTiltServo);
-  rightServo.attach(rightDomeTiltServo);
-  leftServo.write(90, 50, false);
-  rightServo.write(90, 50, false);
+  servos.begin();
+  servos.setPWMFreq(60);
+  servos.writeMicroseconds(13, 1500);
+  servos.writeMicroseconds(14, 1500);
 
   // Motor Drivers
   driveController.Enable();
@@ -181,12 +191,21 @@ void setup()
   PID3.SetOutputLimits(-255, 255);
   PID3.SetSampleTime(15);
 
+  // PID Setup dome motor
+  PID4.SetMode(AUTOMATIC);
+  PID4.SetOutputLimits(-255, 255);
+  PID4.SetSampleTime(15);
+
   /* Initialise the sensor */
   if (!bno.begin())
   {
     /* There was a problem detecting the BNO055 ... check your connections */
     //    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
     while (1);
+  }
+
+  for (int thisReading = 0; thisReading < numReadings; thisReading++) {
+    readings[thisReading] = 0;
   }
 
   delay(1000);
@@ -196,19 +215,20 @@ void setup()
   myDFPlayer.begin(Serial1);
   myDFPlayer.volume(30);
   myDFPlayer.play(1);
-}
 
-bool motorsEnabled = true;
+  // TODO: loadOffsets
+  pitchOffset = -0.75;//4.4;
+  rollOffset = 5.75;
+  potOffsetS2S = 0;
+}
 
 void loop()
 {
-  //  Serial.println(analogRead(A4));
-
   updateIMU();
 
   if (sbus_rx.Read())
   {
-    //    motorsEnabled = areMotorsEnabled();
+    motorsEnabled = areMotorsEnabled();
     if (motorsEnabled)
     {
       mainDrive();
@@ -221,65 +241,22 @@ void loop()
   }
 }
 
-
-
-void disableDrive()
-{
-  servosEnabled = false;
-  flywheelController.Disable();
-  s2sController.Disable();
-  driveController.Disable();
-}
-
-void enableDrive()
-{
-  servosEnabled = true;
-  flywheelController.Disable();
-  s2sController.Disable();
-  driveController.Disable();
-}
-
-void loadCalibration()
-{
-  // TODO;
-//  pitchOffset = EEPROM.readFloat(0);
-//  rollOffset = EEPROM.readFloat(4);
-//  potOffsetS2S = EEPROM.readInt(8);
-//  domeTiltPotOffset = EEPROM.readInt(10);
-//  domeSpinOffset = EEPROM.readInt(12);
-}
-
-void calibrate()
-{
-  // TODO: read pitch
-  // TODO: read roll
-  // TODO: update EEPROM
-}
-
-
-//bool areMotorsEnabled()
-//{
-//  return map(sbus_rx.rx_channels()[CH_MOTORS_ENABLED]RC_MIN, RC_MAX, 0, 1) == 1;
-//}
-
 void domeSpin()
 {
   domeRaw = sbus_rx.rx_channels()[CH_DOME_SPIN];
-  domeSpeed = map(domeRaw, RC_MIN, RC_MAX, -255, 255);
-  if (domeSpeed < 25 && domeSpeed > -25)
+  Setpoint4 = map(domeRaw, RC_MIN, RC_MAX, 0, 1024);
+  Input4 = analogRead(DOME_POT);
+  PID4.Compute();
+  domeSpeed = constrain((int)Output4, -255, 255);
+  if (domeSpeed >= 1)
   {
-    domeSpeed = 0;
-  }
-
-  if (domeSpeed <= -20)
-  {
-    analogWrite(domeSpinPWM1, abs(domeSpeed));
+    analogWrite(domeSpinPWM1, abs(speed));
     analogWrite(domeSpinPWM2, 0);
   }
-  else if (domeSpeed >= 20)
+  else if (domeSpeed <= -1)
   {
     analogWrite(domeSpinPWM1, 0);
-    analogWrite(domeSpinPWM2, abs(domeSpeed));
+    analogWrite(domeSpinPWM2, abs(speed));
   }
   else
   {
@@ -290,15 +267,9 @@ void domeSpin()
 
 void domeServos()
 {
-  if (!servosEnabled)
-  {
-    leftServo.write(90);
-    rightServo.write(90);
-    return;
-  }
-
   domeTiltYRaw = sbus_rx.rx_channels()[CH_DOME_TILT_Y];
   domeTiltXRaw = sbus_rx.rx_channels()[CH_DOME_TILT_X];
+
   domeTiltX = map(domeTiltXRaw, RC_MIN, RC_MAX, MaxDomeTiltX, -MaxDomeTiltX);
   domeTiltY = map(domeTiltYRaw, RC_MAX, RC_MIN, -MaxDomeTiltY, MaxDomeTiltY);
 
@@ -352,15 +323,15 @@ void domeServos()
 
   if (Joy2XEaseMap > 0)
   {
-    Joy2XLowOffsetA = map(Joy2XEaseMap, 0, 18, 0, Joy2XLowOffset);
-    Joy2XHighOffsetA = map(Joy2XEaseMap, 0, 18, 0, Joy2XHighOffset);
+    Joy2XLowOffsetA = map(Joy2XEaseMap, 0, 25, 0, Joy2XLowOffset);
+    Joy2XHighOffsetA = map(Joy2XEaseMap, 0, 25, 0, Joy2XHighOffset);
     ServoLeft = Joy2Ya + Joy2XHighOffsetA;
     ServoRight = Joy2Ya + Joy2XLowOffsetA;
   }
   else if (Joy2XEaseMap < 0)
   {
-    Joy2XLowOffsetA = map(Joy2XEaseMap, -18, 0, Joy2XLowOffset, 0);
-    Joy2XHighOffsetA = map(Joy2XEaseMap, -18, 0, Joy2XHighOffset, 0);
+    Joy2XLowOffsetA = map(Joy2XEaseMap, -25, 0, Joy2XLowOffset, 0);
+    Joy2XHighOffsetA = map(Joy2XEaseMap, -25, 0, Joy2XHighOffset, 0);
     ServoRight = Joy2Ya + Joy2XHighOffsetA;
     ServoLeft = Joy2Ya + Joy2XLowOffsetA;
   }
@@ -371,9 +342,11 @@ void domeServos()
     ServoRight = Joy2Ya;
     ServoLeft = Joy2Ya;
   }
+  int leftMicros = map(ServoLeft + 5, 90, -90, 1000, 2000);
+  int rightMicros = map(ServoRight, 90, -90, 2000, 1000);
 
-  leftServo.write(constrain(map(ServoLeft, 90, -90, 0, 180), 0, 180) + 5, DomeServoSpeed, false);
-  rightServo.write(constrain(map(ServoRight, 90, -90, 180, 0), 0, 180), DomeServoSpeed, false);
+  servos.writeMicroseconds(13, leftMicros);
+  servos.writeMicroseconds(14, rightMicros);
 }
 
 void side2Side()
@@ -389,14 +362,37 @@ void side2Side()
     Setpoint2 -= S2SEase;
   }
 
+  // subtract the last reading:
+  total = total - readings[readIndex];
+
 #ifdef reverseS2SPot
-  S2Spot = map(analogRead(S2S_POT), 0, 1024, -135, 135);
+  readings[readIndex] = map(analogRead(S2S_POT), 0, 1024, -135, 135);
 #else
-  S2Spot = map(analogRead(S2S_POT), 0, 1024, 135, -135);
+  readings[readIndex] = map(analogRead(S2S_POT), 0, 1024, 135, -135);
 #endif
 
+
+  // read from the sensor:
+  //  readings[readIndex] = S2Spot;
+  // add the reading to the total:
+  total = total + readings[readIndex];
+  // advance to the next position in the array:
+  readIndex = readIndex + 1;
+
+  // if we're at the end of the array...
+  if (readIndex >= numReadings) {
+    // ...wrap around to the beginning:
+    readIndex = 0;
+  }
+
+  // calculate the average:
+  average = total / numReadings;
+  S2Spot = average;
+
+  Serial.println(roll);
+
   // PID2 is used to control the 'servo' control of the side to side movement.
-  Input2 = 0;//roll + rollOffset;
+  Input2 = roll - rollOffset;
   Setpoint2 = constrain(Setpoint2, -maxS2STilt, maxS2STilt);
   PID2.Compute();
 
@@ -405,12 +401,10 @@ void side2Side()
   Setpoint1 = map(constrain(Output2, -maxS2STilt, maxS2STilt), -maxS2STilt, maxS2STilt, maxS2STilt, -maxS2STilt);
   PID1.Compute();
 
-  Serial.println(Output1);
-
-  if ((Output1 <= -1) && (Input1 > -maxS2STilt)) {
+  if ((Output1 <= -2) && (Input1 > -maxS2STilt)) {
     Output1a = abs(Output1);
     s2sController.TurnRight(Output1a);
-  } else if ((Output1 >= 1) && (Input1 < maxS2STilt)) {
+  } else if ((Output1 >= 2) && (Input1 < maxS2STilt)) {
     Output1a = abs(Output1);
     s2sController.TurnLeft(Output1a);
   } else {
@@ -486,72 +480,3 @@ void flyWheel()
     }
   }
 }
-
-void checkSoundTrigger()
-{
-  soundTriggerRaw = sbus_rx.rx_channels()[CH_SOUND_TRIGGER];
-
-  if (soundTriggerRaw != lastSoundTriggerState)
-  {
-    lastDebounceTime = millis();
-  }
-
-  if ((millis() - lastDebounceTime) > debounceDelay) {
-    // whatever the soundTriggerRaw is at, it's been there for longer than the debounce
-    // delay, so take it as the actual current state:
-
-    // if the button state has changed:
-    if (soundTriggerRaw != soundTriggerState) {
-      soundTriggerState = soundTriggerRaw;
-
-      if (!soundTriggerLatched && soundTriggerRaw == RC_MAX)
-      {
-        soundTriggerLatched = true;
-      }
-      else if (soundTriggerLatched && soundTriggerRaw == RC_MIN)
-      {
-        soundTriggerLatched = false;
-        playSound();
-      }
-    }
-  }
-
-  lastSoundTriggerState = soundTriggerRaw;
-}
-
-void playSound()
-{
-  soundRaw = sbus_rx.rx_channels()[CH_SOUND_BANK];
-  soundBank = map(soundRaw, 172, 1811, 0, 2);
-  if (soundBank == 2)
-  {
-    // Star Wars sounds
-    myDFPlayer.play(random(50, 53));
-  }
-  else
-  {
-    // BB-8 Sounds
-    myDFPlayer.play(random(0, 49));
-  }
-}
-
-bool in_rc_deadband(int value)
-{
-  return value >= RC_DEADBAND_LOW && value <= RC_DEADBAND_HIGH;
-}
-
-//void setS2SOffset() {
-//  //  if (recIMUData.roll < 0) {
-//  //    rollOffset = abs(recIMUData.roll);
-//  //  } else {
-//  //    rollOffset = recIMUData.roll * -1;
-//  //  }
-//
-//  if (S2Spot < 0) {
-//    potOffsetS2S = abs(S2Spot);
-//  } else {
-//    potOffsetS2S = S2Spot * -1;
-//  }
-//  //  EEPROM.writeFloat(4, rollOffset);
-//  //  EEPROM.writeInt(8, potOffsetS2S);
-//}
