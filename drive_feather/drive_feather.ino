@@ -283,11 +283,11 @@ void panel3() {
   constrain(b31, 0, 255);
   constrain(b32, 0, 255);
 
-  body.setPixelColor(6, body.Color(r31, 0, b31));
+  body.setPixelColor(10, body.Color(r31, 0, b31));
   body.setPixelColor(7, body.Color(r31, 0, b31));
   body.setPixelColor(8, body.Color(r31, 0, b31));
   body.setPixelColor(9, body.Color(r31, 0, b31));
-  body.setPixelColor(10, body.Color(r32, 0, b32));
+  body.setPixelColor(6, body.Color(r32, 0, b32));
 
 
 }

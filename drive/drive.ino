@@ -48,46 +48,39 @@
 #define S2S_L_PWM 7
 #define S2S_EN 33
 #define S2S_POT A0
-#define maxS2STilt 25
-//#define reverseS2SPot
-#define S2SEase 5.5
-
-/**
-   Gyro:
-
-   Leaning forward = +y
-   Tilting left    = -z
-*/
+#define S2S_MAX_TILT 26
+#define S2S_EASE 5.5
+#define S2S_OFFSET 6
 
 // Dome
-#define DomeYEase 2 // Spead of front to back dome movement, higher == faster
-#define DomeXEase 2 // Speed of side to side domemovement, higher == faster
+#define DomeYEase 1.5 // Spead of front to back dome movement, higher == faster
+#define DomeXEase 2.5 // Speed of side to side domemovement, higher == faster
 
 // PID1 is for the side to side tilt
-double Pk1 = 14;
-double Ik1 = 0;
+double Pk1 = 32.0;
+double Ik1 = 0.0;
 double Dk1 = 0.0;
 double Setpoint1, Input1, Output1, Output1a;
 PID PID1(&Input1, &Output1, &Setpoint1, Pk1, Ik1 , Dk1, DIRECT);
 
-// PID is for S2S stability
-double Pk2 = .5;
-double Ik2 = 0;
-double Dk2 = .01;
+// PID for S2S stability
+double Pk2 = 1.0;
+double Ik2 = 0.0;
+double Dk2 = 0.01;
 double Setpoint2, Input2, Output2, Output2a;
 PID PID2(&Input2, &Output2, &Setpoint2, Pk2, Ik2 , Dk2, DIRECT);
 
-//PID3 is for the main drive
-double Pk3 = 5;
-double Ik3 = 0;
-double Dk3 = 0;
+// PID for the main drive
+double Pk3 = 5.0;
+double Ik3 = 0.0;
+double Dk3 = 0.0;
 double Setpoint3, Input3, Output3, Output3a;
 PID PID3(&Input3, &Output3, &Setpoint3, Pk3, Ik3 , Dk3, DIRECT);
 
-// PID is for dome rotation
-double Pk4 = .5;
-double Ik4 = 0;
-double Dk4 = .01;
+// PID for dome rotation
+double Pk4 = 3.0;
+double Ik4 = 0.1;
+double Dk4 = 0.01;
 double Setpoint4, Input4, Output4;
 PID PID4(&Input4, &Output4, &Setpoint4, Pk4, Ik4 , Dk4, DIRECT);
 
@@ -136,7 +129,7 @@ BTS7960 flywheelController(DRIVE_EN, FLY_L_PWM, FLY_R_PWM);
 Adafruit_BNO055 bno = Adafruit_BNO055(-1, 0x28);
 float pitch, roll;
 
-const int numReadings = 15;
+const int numReadings = 10;
 
 int readings[numReadings];      // the readings from the analog input
 int readIndex = 0;              // the index of the current reading
@@ -149,6 +142,8 @@ void setup()
   sbus_rx.Begin();
 
   Serial.begin(115200);
+
+  randomSeed(analogRead(0));
 
   // Pinmodes
   pinMode(DRIVE_R_PWM, OUTPUT);
@@ -204,27 +199,27 @@ void setup()
     while (1);
   }
 
-  for (int thisReading = 0; thisReading < numReadings; thisReading++) {
-    readings[thisReading] = 0;
-  }
+  delay(500);
 
-  delay(1000);
+  // TODO: loadOffsets
+  pitchOffset = -0.55; //4.4;
+  rollOffset = -3.5; //5.75;
+  potOffsetS2S = 3;
+
+  for (int thisReading = 0; thisReading < numReadings; thisReading++) {
+    readings[thisReading] = potOffsetS2S;
+  }
 
   // Sound
   Serial1.begin(9600);
   myDFPlayer.begin(Serial1);
-  myDFPlayer.volume(30);
-  myDFPlayer.play(1);
-
-  // TODO: loadOffsets
-  pitchOffset = -0.75;//4.4;
-  rollOffset = 5.75;
-  potOffsetS2S = 0;
+  //  myDFPlayer.volume(30);
+  //  myDFPlayer.play(2);
 }
 
 void loop()
 {
-  updateIMU();
+  readIMU();
 
   if (sbus_rx.Read())
   {
@@ -238,6 +233,7 @@ void loop()
     domeSpin();
     domeServos();
     checkSoundTrigger();
+    //    debugPrint();
   }
 }
 
@@ -250,13 +246,13 @@ void domeSpin()
   domeSpeed = constrain((int)Output4, -255, 255);
   if (domeSpeed >= 1)
   {
-    analogWrite(domeSpinPWM1, abs(speed));
+    analogWrite(domeSpinPWM1, abs(domeSpeed));
     analogWrite(domeSpinPWM2, 0);
   }
   else if (domeSpeed <= -1)
   {
     analogWrite(domeSpinPWM1, 0);
-    analogWrite(domeSpinPWM2, abs(speed));
+    analogWrite(domeSpinPWM2, abs(domeSpeed));
   }
   else
   {
@@ -265,8 +261,68 @@ void domeSpin()
   }
 }
 
+int domeTiltFwd, domeTiltFwda, domeTiltSide;
+int ch3, ch3a, ch4, ch4a;
+int current_pos_head1;  // variables for smoothing head back/forward
+int target_pos_head1;
+int pot_head1;   // target position/inout
+int diff_head1; // difference of position
+double easing_head1;
+
+int varServo1;
+int varServo2;
+
 void domeServos()
 {
+  // Forwards-backwards
+  ch3 = sbus_rx.rx_channels()[CH_DOME_TILT_Y];
+  ch3a = map(ch3, RC_MIN, RC_MAX, 180, 0);
+//  ch3a = ch3a - (pitch * 4.5);
+
+  target_pos_head1 = ch3a;
+
+  easing_head1 = 100;          //modify this value for sensitivity
+  easing_head1 /= 1000;
+
+  diff_head1 = target_pos_head1 - current_pos_head1;
+
+  // Avoid any strange zero condition
+  if ( diff_head1 != 0.00 )
+  {
+    current_pos_head1 += diff_head1 * easing_head1;
+  }
+
+  varServo1 = current_pos_head1;
+  varServo2 = current_pos_head1;
+
+  // Left-right
+  ch4 = sbus_rx.rx_channels()[CH_DOME_TILT_X];
+  ch4a = map(ch4, RC_MIN, RC_MAX, 35, -35);
+
+  varServo1 = varServo1 - ch4a;
+  varServo2 = varServo2 + ch4a;
+
+  varServo1 = constrain(varServo1, 0, 180);
+  varServo2 = constrain(varServo2, 0, 180);
+
+  // Reverse the servo value
+  varServo2 = map(varServo2, 0, 180, 180, 0);
+
+  Serial.print(varServo1);
+  Serial.print("\t");
+  Serial.println(varServo2);
+
+  varServo1 = map(varServo1, 0, 180, 1000, 2000);
+  varServo2 = map(varServo2, 0, 180, 1000, 2000);
+
+  servos.writeMicroseconds(13, varServo1);
+  servos.writeMicroseconds(14, varServo2);
+}
+
+void domeServos2()
+{
+  dome();
+  return;
   domeTiltYRaw = sbus_rx.rx_channels()[CH_DOME_TILT_Y];
   domeTiltXRaw = sbus_rx.rx_channels()[CH_DOME_TILT_X];
 
@@ -342,7 +398,7 @@ void domeServos()
     ServoRight = Joy2Ya;
     ServoLeft = Joy2Ya;
   }
-  int leftMicros = map(ServoLeft + 5, 90, -90, 1000, 2000);
+  int leftMicros = map(ServoLeft + 20, 90, -90, 1000, 2000);
   int rightMicros = map(ServoRight, 90, -90, 2000, 1000);
 
   servos.writeMicroseconds(13, leftMicros);
@@ -354,12 +410,17 @@ void side2Side()
   s2sRaw = sbus_rx.rx_channels()[CH_DRIVE_S2S];
   s2sSpeed = map(s2sRaw, RC_MIN, RC_MAX, -255, 255);
 
-  if ((s2sSpeed > -S2SEase) && (Setpoint2 < S2SEase) && (s2sSpeed >= -2 && s2sSpeed <= 2)) {
+  if ((s2sSpeed > -S2S_EASE) && (Setpoint2 < S2S_EASE) && (s2sSpeed >= -2 && s2sSpeed <= 2))
+  {
     Setpoint2 = 0;
-  } else if ((s2sSpeed > Setpoint2) && (s2sSpeed != Setpoint2)) {
-    Setpoint2 += S2SEase;
-  } else if ((s2sSpeed < Setpoint2) && (s2sSpeed != Setpoint2)) {
-    Setpoint2 -= S2SEase;
+  }
+  else if ((s2sSpeed > Setpoint2) && (s2sSpeed != Setpoint2))
+  {
+    Setpoint2 += S2S_EASE;
+  }
+  else if ((s2sSpeed < Setpoint2) && (s2sSpeed != Setpoint2))
+  {
+    Setpoint2 -= S2S_EASE;
   }
 
   // subtract the last reading:
@@ -389,22 +450,22 @@ void side2Side()
   average = total / numReadings;
   S2Spot = average;
 
-  Serial.println(roll);
+  //  Serial.println(roll);
 
   // PID2 is used to control the 'servo' control of the side to side movement.
   Input2 = roll - rollOffset;
-  Setpoint2 = constrain(Setpoint2, -maxS2STilt, maxS2STilt);
+  Setpoint2 = constrain(Setpoint2, -S2S_MAX_TILT, S2S_MAX_TILT);
   PID2.Compute();
 
   // PID1 is for side to side stabilization
   Input1 = S2Spot + potOffsetS2S;
-  Setpoint1 = map(constrain(Output2, -maxS2STilt, maxS2STilt), -maxS2STilt, maxS2STilt, maxS2STilt, -maxS2STilt);
+  Setpoint1 = map(constrain(Output2, -S2S_MAX_TILT, S2S_MAX_TILT), -S2S_MAX_TILT, S2S_MAX_TILT, S2S_MAX_TILT, -S2S_MAX_TILT);
   PID1.Compute();
 
-  if ((Output1 <= -2) && (Input1 > -maxS2STilt)) {
+  if ((Output1 <= -1) && (Input1 > -S2S_MAX_TILT)) {
     Output1a = abs(Output1);
     s2sController.TurnRight(Output1a);
-  } else if ((Output1 >= 2) && (Input1 < maxS2STilt)) {
+  } else if ((Output1 >= 1) && (Input1 < S2S_MAX_TILT)) {
     Output1a = abs(Output1);
     s2sController.TurnLeft(Output1a);
   } else {
@@ -412,29 +473,45 @@ void side2Side()
   }
 }
 
+void debugPrint()
+{
+  Serial.print("S2S: ");
+  Serial.print(analogRead(S2S_POT));
+  Serial.print("\t");
+
+  Serial.print("S2S mapped: ");
+  Serial.print(map(analogRead(S2S_POT), 0, 1024, -135, 135));
+  Serial.print("\t");
+
+  Serial.print("Input1: ");
+  Serial.print(Input1);
+  Serial.print("\t");
+
+  Serial.print("Pitch: ");
+  Serial.print(pitch);
+  Serial.print("\t");
+
+  Serial.print("Roll: ");
+  Serial.print(roll);
+  Serial.print("\t");
+
+  Serial.println();
+}
+
 /**
-   Gyro:
+   ReadIMU
 
    Leaning forward = +y
    Tilting left    = -z
 
-   Pitch is leaning forawrds/backwards - Y axis
+   Pitch is leaning forwards/backwards - Y axis
    Roll is leaning sideways - Z axis
 */
-
-void updateIMU()
+void readIMU()
 {
-  // Get IMU data
   imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   pitch = euler.y();
   roll = euler.z();
-  //  Serial.print("Pitch: ");
-  //  Serial.print(pitch);
-  //  Serial.print("\t");
-  //  Serial.print("Roll: ");
-  //  Serial.print(roll);
-  //  Serial.print("\t");
-  //  Serial.println();
 }
 
 void mainDrive()
@@ -443,13 +520,16 @@ void mainDrive()
   driveSpeed = map(driveRaw, RC_MIN, RC_MAX, 255, -255);
 
   Setpoint3 = constrain(driveSpeed, -55, 55);
-  Input3 = (pitch + pitchOffset) + (Joy2YEaseMap /= 2);// - domeOffset;
+  Input3 = (pitch + pitchOffset);// + (Joy2YEaseMap /= 2);// - domeOffset;
   PID3.Compute();
 
-  if (Output3 >= 2) {   //make BB8 roll
+  if (Output3 >= 1)
+  {
     Output3a = abs(Output3);
     driveController.TurnLeft(abs(Output3));
-  } else if (Output3 < -2) {
+  }
+  else if (Output3 < -1)
+  {
     Output3a = abs(Output3);
     driveController.TurnRight(abs(Output3));
   }
