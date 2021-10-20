@@ -33,6 +33,8 @@
 #define CH_SOUND_TRIGGER 7
 #define CH_SOUND_BANK 8
 #define CH_DRIVES_EN 9
+#define CH_IMU_SEL 10
+#define CH_SD_SEL 11 // Rename
 
 // Main Drive
 #define DRIVE_R_PWM 13
@@ -49,24 +51,24 @@
 #define S2S_EN 33
 #define S2S_POT A0
 #define S2S_MAX_TILT 26
-#define S2S_EASE 5.5
-#define S2S_OFFSET 6
+#define S2S_EASE 4.5
+#define S2S_OFFSET 1
 
 // Dome
 #define DomeYEase 1.5 // Spead of front to back dome movement, higher == faster
 #define DomeXEase 2.5 // Speed of side to side domemovement, higher == faster
 
 // PID1 is for the side to side tilt
-double Pk1 = 32.0;
+double Pk1 = 15.0;
 double Ik1 = 0.0;
-double Dk1 = 0.0;
+double Dk1 = 0.5;
 double Setpoint1, Input1, Output1, Output1a;
 PID PID1(&Input1, &Output1, &Setpoint1, Pk1, Ik1 , Dk1, DIRECT);
 
 // PID for S2S stability
-double Pk2 = 1.0;
+double Pk2 = 0.6;
 double Ik2 = 0.0;
-double Dk2 = 0.01;
+double Dk2 = 0.03;
 double Setpoint2, Input2, Output2, Output2a;
 PID PID2(&Input2, &Output2, &Setpoint2, Pk2, Ik2 , Dk2, DIRECT);
 
@@ -116,10 +118,6 @@ SbusRx sbus_rx(&Serial2);
 // Sound
 DFRobotDFPlayerMini myDFPlayer;
 
-// Neck Servos
-//Servo leftServo;
-//Servo rightServo;
-
 // BTS7960 Motor Drivers
 BTS7960 driveController(DRIVE_EN, DRIVE_L_PWM, DRIVE_R_PWM);
 BTS7960 s2sController(S2S_EN, S2S_L_PWM, S2S_R_PWM);
@@ -130,7 +128,6 @@ Adafruit_BNO055 bno = Adafruit_BNO055(-1, 0x28);
 float pitch, roll;
 
 const int numReadings = 10;
-
 int readings[numReadings];      // the readings from the analog input
 int readIndex = 0;              // the index of the current reading
 int total = 0;                  // the running total
@@ -203,8 +200,8 @@ void setup()
 
   // TODO: loadOffsets
   pitchOffset = -0.55; //4.4;
-  rollOffset = -3.5; //5.75;
-  potOffsetS2S = 3;
+  rollOffset = 7.88;
+  potOffsetS2S = 0;
 
   for (int thisReading = 0; thisReading < numReadings; thisReading++) {
     readings[thisReading] = potOffsetS2S;
@@ -233,7 +230,7 @@ void loop()
     domeSpin();
     domeServos();
     checkSoundTrigger();
-    //    debugPrint();
+    debugPrint();
   }
 }
 
@@ -277,7 +274,7 @@ void domeServos()
   // Forwards-backwards
   ch3 = sbus_rx.rx_channels()[CH_DOME_TILT_Y];
   ch3a = map(ch3, RC_MIN, RC_MAX, 180, 0);
-//  ch3a = ch3a - (pitch * 4.5);
+  ch3a = ch3a + (pitch * 4.5);
 
   target_pos_head1 = ch3a;
 
@@ -308,10 +305,6 @@ void domeServos()
   // Reverse the servo value
   varServo2 = map(varServo2, 0, 180, 180, 0);
 
-  Serial.print(varServo1);
-  Serial.print("\t");
-  Serial.println(varServo2);
-
   varServo1 = map(varServo1, 0, 180, 1000, 2000);
   varServo2 = map(varServo2, 0, 180, 1000, 2000);
 
@@ -319,93 +312,84 @@ void domeServos()
   servos.writeMicroseconds(14, varServo2);
 }
 
-void domeServos2()
-{
-  dome();
-  return;
-  domeTiltYRaw = sbus_rx.rx_channels()[CH_DOME_TILT_Y];
-  domeTiltXRaw = sbus_rx.rx_channels()[CH_DOME_TILT_X];
-
-  domeTiltX = map(domeTiltXRaw, RC_MIN, RC_MAX, MaxDomeTiltX, -MaxDomeTiltX);
-  domeTiltY = map(domeTiltYRaw, RC_MAX, RC_MIN, -MaxDomeTiltY, MaxDomeTiltY);
-
-  // X direction
-  if ((domeTiltX + DomeXEase) > Joy2XEase && (domeTiltX - DomeXEase) < Joy2XEase)
-  {
-    Joy2XEase = domeTiltX;
-  }
-  else if (Joy2XEase > domeTiltX)
-  {
-    Joy2XEase -= DomeXEase;
-  }
-  else if (Joy2XEase < domeTiltX)
-  {
-    Joy2XEase += DomeXEase;
-  }
-
-  // Y direction
-  if ((domeTiltY + DomeYEase) > Joy2YEase && (domeTiltY - DomeYEase) < Joy2YEase)
-  {
-    Joy2YEase = domeTiltY;
-  }
-  else if (Joy2YEase > domeTiltY)
-  {
-    Joy2YEase -= DomeYEase;
-  }
-  else if (Joy2YEase < domeTiltY)
-  {
-    Joy2YEase += DomeYEase;
-  }
-
-  Joy2XEaseMap = Joy2XEase;
-  Joy2YEaseMap = Joy2YEase;
-
-  if (Joy2YEaseMap < 0)
-  {
-    Joy2Ya = map(Joy2YEaseMap, -20, 0, 70, 0);
-    Joy2XLowOffset = map(Joy2Ya, 1, 70, -15, -50);
-    Joy2XHighOffset = map(Joy2Ya, 1, 70, 30, 20);
-  }
-  else if (Joy2YEaseMap > 0)
-  {
-    Joy2Ya = map(Joy2YEaseMap, 0, 24, 0, -80);
-    Joy2XLowOffset = map(Joy2Ya, -1, -80, -15, 10);
-    Joy2XHighOffset = map(Joy2Ya, -1, -80, 30, 90);
-  }
-  else
-  {
-    Joy2Ya = 0;
-  }
-
-  if (Joy2XEaseMap > 0)
-  {
-    Joy2XLowOffsetA = map(Joy2XEaseMap, 0, 25, 0, Joy2XLowOffset);
-    Joy2XHighOffsetA = map(Joy2XEaseMap, 0, 25, 0, Joy2XHighOffset);
-    ServoLeft = Joy2Ya + Joy2XHighOffsetA;
-    ServoRight = Joy2Ya + Joy2XLowOffsetA;
-  }
-  else if (Joy2XEaseMap < 0)
-  {
-    Joy2XLowOffsetA = map(Joy2XEaseMap, -25, 0, Joy2XLowOffset, 0);
-    Joy2XHighOffsetA = map(Joy2XEaseMap, -25, 0, Joy2XHighOffset, 0);
-    ServoRight = Joy2Ya + Joy2XHighOffsetA;
-    ServoLeft = Joy2Ya + Joy2XLowOffsetA;
-  }
-  else
-  {
-    Joy2XHighOffsetA = 0;
-    Joy2XLowOffsetA = 0;
-    ServoRight = Joy2Ya;
-    ServoLeft = Joy2Ya;
-  }
-  int leftMicros = map(ServoLeft + 20, 90, -90, 1000, 2000);
-  int rightMicros = map(ServoRight, 90, -90, 2000, 1000);
-
-  servos.writeMicroseconds(13, leftMicros);
-  servos.writeMicroseconds(14, rightMicros);
-}
+int ch2, pot;
+int current_pos_trousers;  // variables for smoothing trousers
+int target_pos_trousers;
+int pot_trousers;   // target position/inout
+int diff_trousers; // difference of position
+double easing_trousers;
 
 void side2Side()
+{
+  ch2 = sbus_rx.rx_channels()[CH_DRIVE_S2S];
+
+  target_pos_trousers = map(ch2, RC_MIN, RC_MAX, 95, -95);
+
+  easing_trousers = 80;
+  easing_trousers /= 1000;
+
+  // Work out the required travel.
+  diff_trousers = target_pos_trousers - current_pos_trousers;
+
+  // Avoid any strange zero condition
+  if ( diff_trousers != 0.00 )
+  {
+    current_pos_trousers += diff_trousers * easing_trousers;
+  }
+
+  Setpoint2 = current_pos_trousers;
+
+  // Rolling average
+  total = total - readings[readIndex];
+  readings[readIndex] = analogRead(S2S_POT);
+  total = total + readings[readIndex];
+  readIndex = readIndex + 1;
+
+  // Wrap to beginning
+  if (readIndex >= numReadings)
+  {
+    readIndex = 0;
+  }
+
+  // calculate the average:
+  average = total / numReadings;
+  pot = average;
+
+  Input2 = roll * -1;
+
+  Setpoint2 = constrain(Setpoint2, -95, 95);
+  PID2.Compute();
+  Setpoint1 = Output2;
+
+  pot = map(pot, 0, 1024, -255, 255);
+
+  int val = 95;
+  Input1 = pot;
+  Input1 = constrain(Input1, -val, val);
+  Setpoint1 = constrain(Setpoint1, -val, val);
+  Setpoint1 = map(Setpoint1, val, -val, -val, val);
+  -
+  PID1.Compute();
+
+  // ************** drive trousers motor *************
+
+  if (Output1 < 0)
+  {
+    Output1a = abs(Output1);
+    s2sController.TurnLeft(Output1a);
+  }
+  else if (Output1 > 0)
+  {
+    Output1a = abs(Output1);
+    s2sController.TurnRight(Output1a);
+  }
+  else
+  {
+    s2sController.Stop();
+  }
+}
+
+void side2Side2()
 {
   s2sRaw = sbus_rx.rx_channels()[CH_DRIVE_S2S];
   s2sSpeed = map(s2sRaw, RC_MIN, RC_MAX, -255, 255);
