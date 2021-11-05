@@ -1,4 +1,4 @@
-void checkSoundTrigger()
+void sound_trigger()
 {
   soundTriggerRaw = sbus_rx.rx_channels()[CH_SOUND_TRIGGER];
 
@@ -22,7 +22,7 @@ void checkSoundTrigger()
       else if (soundTriggerLatched && soundTriggerRaw == RC_MIN)
       {
         soundTriggerLatched = false;
-        playSound();
+        play_sound();
       }
     }
   }
@@ -30,7 +30,7 @@ void checkSoundTrigger()
   lastSoundTriggerState = soundTriggerRaw;
 }
 
-void playSound()
+void play_sound()
 {
   soundRaw = sbus_rx.rx_channels()[CH_SOUND_BANK];
   soundBank = map(soundRaw, 172, 1811, 0, 2);

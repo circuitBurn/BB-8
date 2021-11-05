@@ -9,13 +9,7 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 
-#define domeSpinPWM1 10
-#define domeSpinPWM2 11
-
-#define DOME_POT A4
-#define MaxDomeTiltY 25
-#define MaxDomeTiltX 30
-
+// RC
 #define RC_MIN 172
 #define RC_MAX 1811
 #define RC_DEADBAND_LOW 960
@@ -32,9 +26,9 @@
 #define CH_DOME_SPIN 5
 #define CH_SOUND_TRIGGER 7
 #define CH_SOUND_BANK 8
-#define CH_DRIVES_EN 9
-#define CH_IMU_SEL 10
-#define CH_SD_SEL 11 // Rename
+#define CH_IMU_SEL 9
+#define CH_DRIVE_EN 10
+#define CH_ROLL_OFFSET 11
 
 // Main Drive
 #define DRIVE_R_PWM 13
@@ -55,8 +49,9 @@
 #define S2S_OFFSET 1
 
 // Dome
-#define DomeYEase 1.5 // Spead of front to back dome movement, higher == faster
-#define DomeXEase 2.5 // Speed of side to side domemovement, higher == faster
+#define domeSpinPWM1 10
+#define domeSpinPWM2 11
+#define DOME_POT A4
 
 // PID1 is for the side to side tilt
 double Pk1 = 15.0;
@@ -98,19 +93,30 @@ float pitchOffset, rollOffset, potOffsetS2S, domeTiltPotOffset, domeSpinOffset;
 
 // Dome Servos
 Adafruit_PWMServoDriver servos = Adafruit_PWMServoDriver();
-int domeTiltXRaw, domeTiltYRaw;
-int domeTiltX, domeTiltY;
-double Joy2YPitch;
-int Joy2Ya, Joy2XLowOffset, Joy2XHighOffset, Joy2XLowOffsetA, Joy2XHighOffsetA, ServoLeft, ServoRight;
-double Joy2X, Joy2Y, LeftJoy2X, LeftJoy2Y, Joy2XEase, Joy2YEase, Joy2XEaseMap;
-double Joy2YEaseMap;
 
+// Variable dump
+// TODO: clean up
 int domeRaw, domeSpeed;
 int S2Spot, s2sRaw, s2sSpeed;
 int driveRaw, driveSpeed;
 int flywheelRaw, flywheelSpeed;
 int soundBank, soundTriggerRaw, soundRaw;
 bool motorsEnabled = true;
+int domeTiltFwd, domeTiltFwda, domeTiltSide;
+int ch3, ch3a, ch4, ch4a;
+int current_pos_head1;  // variables for smoothing head back/forward
+int target_pos_head1;
+int pot_head1;   // target position/inout
+int diff_head1; // difference of position
+double easing_head1;
+int varServo1;
+int varServo2;
+int ch2, pot;
+int current_pos_trousers;  // variables for smoothing trousers
+int target_pos_trousers;
+int pot_trousers;   // target position/inout
+int diff_trousers; // difference of position
+double easing_trousers;
 
 // SBUS
 SbusRx sbus_rx(&Serial2);
@@ -127,22 +133,23 @@ BTS7960 flywheelController(DRIVE_EN, FLY_L_PWM, FLY_R_PWM);
 Adafruit_BNO055 bno = Adafruit_BNO055(-1, 0x28);
 float pitch, roll;
 
+// S2S pot smoothing
+// TODO: rename
 const int numReadings = 10;
-int readings[numReadings];      // the readings from the analog input
-int readIndex = 0;              // the index of the current reading
-int total = 0;                  // the running total
-int average = 0;                // the average
+int readings[numReadings];
+int readIndex = 0;
+int total = 0;
+int average = 0;
+
 
 void setup()
 {
-  // SBUS
   sbus_rx.Begin();
 
   Serial.begin(115200);
 
   randomSeed(analogRead(0));
 
-  // Pinmodes
   pinMode(DRIVE_R_PWM, OUTPUT);
   pinMode(DRIVE_L_PWM, OUTPUT);
   pinMode(DRIVE_EN, OUTPUT);
@@ -201,18 +208,21 @@ void setup()
   // TODO: loadOffsets
   pitchOffset = -0.55; //4.4;
   rollOffset = 7.88;
-  potOffsetS2S = 0;
+  potOffsetS2S = 3;
 
-  for (int thisReading = 0; thisReading < numReadings; thisReading++) {
+  // Fill the smoothing readings with the initial pot offset
+  for (int thisReading = 0; thisReading < numReadings; thisReading++)
+  {
     readings[thisReading] = potOffsetS2S;
   }
 
   // Sound
   Serial1.begin(9600);
   myDFPlayer.begin(Serial1);
-  //  myDFPlayer.volume(30);
-  //  myDFPlayer.play(2);
+  myDFPlayer.volume(30);
+  myDFPlayer.play(2);
 }
+
 
 void loop()
 {
@@ -220,21 +230,27 @@ void loop()
 
   if (sbus_rx.Read())
   {
-    motorsEnabled = areMotorsEnabled();
+    motorsEnabled = is_drive_enabled();
     if (motorsEnabled)
     {
-      mainDrive();
-      flyWheel();
-      side2Side();
+      enable_drive();
+      main_drive();
+      fly_wheel();
+      side_to_side();
     }
-    domeSpin();
-    domeServos();
-    checkSoundTrigger();
-    debugPrint();
+    else
+    {
+      disable_drive();
+    }
+    dome_spin();
+    dome_servos();
+    sound_trigger();
+    debug_print();
   }
 }
 
-void domeSpin()
+
+void dome_spin()
 {
   domeRaw = sbus_rx.rx_channels()[CH_DOME_SPIN];
   Setpoint4 = map(domeRaw, RC_MIN, RC_MAX, 0, 1024);
@@ -258,18 +274,8 @@ void domeSpin()
   }
 }
 
-int domeTiltFwd, domeTiltFwda, domeTiltSide;
-int ch3, ch3a, ch4, ch4a;
-int current_pos_head1;  // variables for smoothing head back/forward
-int target_pos_head1;
-int pot_head1;   // target position/inout
-int diff_head1; // difference of position
-double easing_head1;
 
-int varServo1;
-int varServo2;
-
-void domeServos()
+void dome_servos()
 {
   // Forwards-backwards
   ch3 = sbus_rx.rx_channels()[CH_DOME_TILT_Y];
@@ -294,7 +300,7 @@ void domeServos()
 
   // Left-right
   ch4 = sbus_rx.rx_channels()[CH_DOME_TILT_X];
-  ch4a = map(ch4, RC_MIN, RC_MAX, 35, -35);
+  ch4a = map(ch4, RC_MIN, RC_MAX, 45, -45);
 
   varServo1 = varServo1 - ch4a;
   varServo2 = varServo2 + ch4a;
@@ -312,18 +318,14 @@ void domeServos()
   servos.writeMicroseconds(14, varServo2);
 }
 
-int ch2, pot;
-int current_pos_trousers;  // variables for smoothing trousers
-int target_pos_trousers;
-int pot_trousers;   // target position/inout
-int diff_trousers; // difference of position
-double easing_trousers;
 
-void side2Side()
+void side_to_side()
 {
+  // TODO: sort this variable out!
+  int val = 95;
   ch2 = sbus_rx.rx_channels()[CH_DRIVE_S2S];
 
-  target_pos_trousers = map(ch2, RC_MIN, RC_MAX, 95, -95);
+  target_pos_trousers = map(ch2, RC_MIN, RC_MAX, val, -val);
 
   easing_trousers = 80;
   easing_trousers /= 1000;
@@ -357,18 +359,24 @@ void side2Side()
 
   Input2 = roll * -1;
 
-  Setpoint2 = constrain(Setpoint2, -95, 95);
+  Setpoint2 = constrain(Setpoint2, -val, val);
+
+  //  // Update PK2 from RC
+  //  Pk2 = get_pk2();
+  //  PID2.SetTunings(Pk2, Ik2, Dk2);
   PID2.Compute();
+
   Setpoint1 = Output2;
 
-  pot = map(pot, 0, 1024, -255, 255);
+  Input1 = map(pot, 0, 1024, -255, 255);
 
-  int val = 95;
-  Input1 = pot;
   Input1 = constrain(Input1, -val, val);
   Setpoint1 = constrain(Setpoint1, -val, val);
   Setpoint1 = map(Setpoint1, val, -val, -val, val);
-  -
+
+  // Update PK1 from RC
+  Pk1 = get_pk1();
+  PID1.SetTunings(Pk1, Ik1, Dk1);
   PID1.Compute();
 
   // ************** drive trousers motor *************
@@ -388,6 +396,7 @@ void side2Side()
     s2sController.Stop();
   }
 }
+
 
 void side2Side2()
 {
@@ -416,7 +425,6 @@ void side2Side2()
   readings[readIndex] = map(analogRead(S2S_POT), 0, 1024, 135, -135);
 #endif
 
-
   // read from the sensor:
   //  readings[readIndex] = S2Spot;
   // add the reading to the total:
@@ -434,10 +442,8 @@ void side2Side2()
   average = total / numReadings;
   S2Spot = average;
 
-  //  Serial.println(roll);
-
   // PID2 is used to control the 'servo' control of the side to side movement.
-  Input2 = roll - rollOffset;
+  Input2 = 0;//roll + rollOffset;
   Setpoint2 = constrain(Setpoint2, -S2S_MAX_TILT, S2S_MAX_TILT);
   PID2.Compute();
 
@@ -457,48 +463,8 @@ void side2Side2()
   }
 }
 
-void debugPrint()
-{
-  Serial.print("S2S: ");
-  Serial.print(analogRead(S2S_POT));
-  Serial.print("\t");
 
-  Serial.print("S2S mapped: ");
-  Serial.print(map(analogRead(S2S_POT), 0, 1024, -135, 135));
-  Serial.print("\t");
-
-  Serial.print("Input1: ");
-  Serial.print(Input1);
-  Serial.print("\t");
-
-  Serial.print("Pitch: ");
-  Serial.print(pitch);
-  Serial.print("\t");
-
-  Serial.print("Roll: ");
-  Serial.print(roll);
-  Serial.print("\t");
-
-  Serial.println();
-}
-
-/**
-   ReadIMU
-
-   Leaning forward = +y
-   Tilting left    = -z
-
-   Pitch is leaning forwards/backwards - Y axis
-   Roll is leaning sideways - Z axis
-*/
-void readIMU()
-{
-  imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  pitch = euler.y();
-  roll = euler.z();
-}
-
-void mainDrive()
+void main_drive()
 {
   driveRaw = sbus_rx.rx_channels()[CH_DRIVE_MAIN];
   driveSpeed = map(driveRaw, RC_MIN, RC_MAX, 255, -255);
@@ -523,7 +489,8 @@ void mainDrive()
   }
 }
 
-void flyWheel()
+
+void fly_wheel()
 {
   flywheelRaw = sbus_rx.rx_channels()[CH_FLYWHEEL];
   flywheelSpeed = map(flywheelRaw, RC_MIN, RC_MAX, -255, 255);
