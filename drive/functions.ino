@@ -66,8 +66,7 @@ double get_roll_offset()
 
 double get_roll_multiplier()
 {
-  return 1;
-//  return mapfloat(sbus_rx.rx_channels()[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 0, 1);
+  return mapfloat(sbus_rx.rx_channels()[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 0, 1);
 }
 
 

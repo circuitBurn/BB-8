@@ -220,7 +220,7 @@ void setup()
   Serial1.begin(9600);
   myDFPlayer.begin(Serial1);
   myDFPlayer.volume(30);
-  myDFPlayer.play(2);
+  myDFPlayer.play(1);
 }
 
 
@@ -245,7 +245,7 @@ void loop()
     dome_spin();
     dome_servos();
     sound_trigger();
-    debug_print();
+//    debug_print();
   }
 }
 
@@ -253,10 +253,23 @@ void loop()
 void dome_spin()
 {
   domeRaw = sbus_rx.rx_channels()[CH_DOME_SPIN];
-  Setpoint4 = map(domeRaw, RC_MIN, RC_MAX, 0, 1024);
-  Input4 = analogRead(DOME_POT);
-  PID4.Compute();
-  domeSpeed = constrain((int)Output4, -255, 255);
+
+  if (domeRaw > 250 && domeRaw < 1700)
+  {
+    Setpoint4 = map(domeRaw, RC_MIN, RC_MAX, 0, 1024);
+    Input4 = analogRead(DOME_POT);
+    PID4.Compute();
+    domeSpeed = constrain((int)Output4, -255, 255);
+  }
+  else if (domeRaw <= 250)
+  {
+    domeSpeed = -255;
+  }
+  else if (domeRaw >= 1700)
+  {
+    domeSpeed = 255;
+  }
+
   if (domeSpeed >= 1)
   {
     analogWrite(domeSpinPWM1, abs(domeSpeed));
@@ -343,7 +356,7 @@ void side_to_side()
 
   // Rolling average
   total = total - readings[readIndex];
-  readings[readIndex] = analogRead(S2S_POT);
+  readings[readIndex] = analogRead(S2S_POT) + 12;
   total = total + readings[readIndex];
   readIndex = readIndex + 1;
 
@@ -396,73 +409,6 @@ void side_to_side()
     s2sController.Stop();
   }
 }
-
-
-void side2Side2()
-{
-  s2sRaw = sbus_rx.rx_channels()[CH_DRIVE_S2S];
-  s2sSpeed = map(s2sRaw, RC_MIN, RC_MAX, -255, 255);
-
-  if ((s2sSpeed > -S2S_EASE) && (Setpoint2 < S2S_EASE) && (s2sSpeed >= -2 && s2sSpeed <= 2))
-  {
-    Setpoint2 = 0;
-  }
-  else if ((s2sSpeed > Setpoint2) && (s2sSpeed != Setpoint2))
-  {
-    Setpoint2 += S2S_EASE;
-  }
-  else if ((s2sSpeed < Setpoint2) && (s2sSpeed != Setpoint2))
-  {
-    Setpoint2 -= S2S_EASE;
-  }
-
-  // subtract the last reading:
-  total = total - readings[readIndex];
-
-#ifdef reverseS2SPot
-  readings[readIndex] = map(analogRead(S2S_POT), 0, 1024, -135, 135);
-#else
-  readings[readIndex] = map(analogRead(S2S_POT), 0, 1024, 135, -135);
-#endif
-
-  // read from the sensor:
-  //  readings[readIndex] = S2Spot;
-  // add the reading to the total:
-  total = total + readings[readIndex];
-  // advance to the next position in the array:
-  readIndex = readIndex + 1;
-
-  // if we're at the end of the array...
-  if (readIndex >= numReadings) {
-    // ...wrap around to the beginning:
-    readIndex = 0;
-  }
-
-  // calculate the average:
-  average = total / numReadings;
-  S2Spot = average;
-
-  // PID2 is used to control the 'servo' control of the side to side movement.
-  Input2 = 0;//roll + rollOffset;
-  Setpoint2 = constrain(Setpoint2, -S2S_MAX_TILT, S2S_MAX_TILT);
-  PID2.Compute();
-
-  // PID1 is for side to side stabilization
-  Input1 = S2Spot + potOffsetS2S;
-  Setpoint1 = map(constrain(Output2, -S2S_MAX_TILT, S2S_MAX_TILT), -S2S_MAX_TILT, S2S_MAX_TILT, S2S_MAX_TILT, -S2S_MAX_TILT);
-  PID1.Compute();
-
-  if ((Output1 <= -1) && (Input1 > -S2S_MAX_TILT)) {
-    Output1a = abs(Output1);
-    s2sController.TurnRight(Output1a);
-  } else if ((Output1 >= 1) && (Input1 < S2S_MAX_TILT)) {
-    Output1a = abs(Output1);
-    s2sController.TurnLeft(Output1a);
-  } else {
-    s2sController.Stop();
-  }
-}
-
 
 void main_drive()
 {
