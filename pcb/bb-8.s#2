@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="2" name="Route2" color="16" fill="1" visible="no" active="no"/>
@@ -6356,13 +6356,26 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <text x="73.025" y="99.06" size="1.778" layer="97">DFPlayer Mini</text>
 <text x="151.36" y="137.565" size="1.778" layer="97">S2S Pot</text>
 <text x="152.13" y="108.585" size="1.778" layer="97">Dome Pot</text>
-<text x="305.435" y="152.4" size="1.778" layer="97">Flywheel Spin</text>
-<text x="306.935" y="132.67" size="1.778" layer="97">Side to Side</text>
-<text x="306.935" y="112.9" size="1.778" layer="97">Main Drive</text>
-<text x="307.935" y="94.9" size="1.778" layer="97">Dome Spin</text>
+<text x="305.435" y="154.94" size="1.778" layer="97">Flywheel Spin</text>
+<text x="306.935" y="135.21" size="1.778" layer="97">Side to Side</text>
+<text x="306.935" y="115.44" size="1.778" layer="97">Main Drive</text>
+<text x="307.935" y="97.44" size="1.778" layer="97">Dome Spin</text>
 <text x="40.64" y="140.97" size="1.778" layer="97">SBUS Inverter</text>
 <text x="151.13" y="36.83" size="1.778" layer="97">BNO055</text>
-<text x="307.935" y="77.12" size="1.778" layer="97">Left Servo</text>
+<text x="285.75" y="13.335" size="3.81" layer="97">circuitBurn</text>
+<text x="285.75" y="5.715" size="3.81" layer="97">Joe's Drive R/C v1.0.0</text>
+<text x="285.75" y="-2.54" size="3.81" layer="97">18.06.2021</text>
+<wire x1="339.725" y1="-4.445" x2="339.725" y2="3.175" width="0.1524" layer="97"/>
+<wire x1="339.725" y1="3.175" x2="339.725" y2="11.43" width="0.1524" layer="97"/>
+<wire x1="339.725" y1="11.43" x2="339.725" y2="19.05" width="0.1524" layer="97"/>
+<wire x1="339.725" y1="19.05" x2="283.845" y2="19.05" width="0.1524" layer="97"/>
+<wire x1="283.845" y1="19.05" x2="283.845" y2="11.43" width="0.1524" layer="97"/>
+<wire x1="283.845" y1="11.43" x2="283.845" y2="3.175" width="0.1524" layer="97"/>
+<wire x1="283.845" y1="3.175" x2="283.845" y2="-4.445" width="0.1524" layer="97"/>
+<wire x1="283.845" y1="-4.445" x2="339.725" y2="-4.445" width="0.1524" layer="97"/>
+<wire x1="283.845" y1="3.175" x2="339.725" y2="3.175" width="0.1524" layer="97"/>
+<wire x1="283.845" y1="11.43" x2="339.725" y2="11.43" width="0.1524" layer="97"/>
+<text x="307.935" y="74.58" size="1.778" layer="97">Left Servo</text>
 <text x="307.935" y="49.18" size="1.778" layer="97">Right Servo</text>
 </plain>
 <instances>
@@ -6409,7 +6422,7 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <instance part="SUPPLY11" gate="GND" x="148.59" y="95.25" smashed="yes">
 <attribute name="VALUE" x="146.685" y="92.075" size="1.778" layer="96"/>
 </instance>
-<instance part="DOME" gate="G$1" x="313.055" y="87.63" smashed="yes"/>
+<instance part="DOME" gate="G$1" x="313.055" y="90.17" smashed="yes"/>
 <instance part="R1" gate="G$1" x="51.435" y="127" smashed="yes">
 <attribute name="NAME" x="50.165" y="128.4986" size="1.778" layer="95"/>
 <attribute name="VALUE" x="49.53" y="123.698" size="1.778" layer="96"/>
@@ -6429,14 +6442,14 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <attribute name="NAME" x="201.93" y="149.987" size="1.778" layer="95"/>
 <attribute name="VALUE" x="201.93" y="40.005" size="1.778" layer="96"/>
 </instance>
-<instance part="S2S" gate="&gt;NAME" x="313.055" y="125.73" smashed="yes" rot="R270">
-<attribute name="NAME" x="319.405" y="128.27" size="1.27" layer="95" rot="R270"/>
+<instance part="S2S" gate="&gt;NAME" x="313.055" y="128.27" smashed="yes" rot="R270">
+<attribute name="NAME" x="319.405" y="130.81" size="1.27" layer="95" rot="R270"/>
 </instance>
-<instance part="FLY" gate="&gt;NAME" x="313.055" y="143.51" smashed="yes" rot="R270">
-<attribute name="NAME" x="319.405" y="145.415" size="1.27" layer="95" rot="R270"/>
+<instance part="FLY" gate="&gt;NAME" x="313.055" y="146.05" smashed="yes" rot="R270">
+<attribute name="NAME" x="319.405" y="147.955" size="1.27" layer="95" rot="R270"/>
 </instance>
-<instance part="MAIN" gate="&gt;NAME" x="313.055" y="105.41" smashed="yes" rot="R270">
-<attribute name="NAME" x="319.405" y="108.585" size="1.27" layer="95" rot="R270"/>
+<instance part="MAIN" gate="&gt;NAME" x="313.055" y="107.95" smashed="yes" rot="R270">
+<attribute name="NAME" x="319.405" y="111.125" size="1.27" layer="95" rot="R270"/>
 </instance>
 <instance part="DOME_POT" gate="&gt;NAME" x="156.21" y="102.235" smashed="yes" rot="R270">
 <attribute name="NAME" x="162.56" y="106.045" size="1.27" layer="95" rot="R270"/>
@@ -6444,15 +6457,15 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <instance part="S2S_POT" gate="&gt;NAME" x="156.21" y="131.445" smashed="yes" rot="R270">
 <attribute name="NAME" x="162.56" y="135.255" size="1.27" layer="95" rot="R270"/>
 </instance>
-<instance part="SERVO1" gate="A" x="302.895" y="62.23" smashed="yes" rot="R180">
-<attribute name="NAME" x="309.245" y="56.515" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="309.245" y="69.85" size="1.778" layer="96" rot="R180"/>
+<instance part="SERVO1" gate="A" x="302.895" y="59.69" smashed="yes" rot="R180">
+<attribute name="NAME" x="309.245" y="53.975" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="309.245" y="67.31" size="1.778" layer="96" rot="R180"/>
 </instance>
-<instance part="SUPPLY2" gate="G$1" x="318.77" y="69.215" smashed="yes">
-<attribute name="VALUE" x="316.865" y="72.39" size="1.778" layer="96"/>
+<instance part="SUPPLY2" gate="G$1" x="318.77" y="66.675" smashed="yes">
+<attribute name="VALUE" x="316.865" y="69.85" size="1.778" layer="96"/>
 </instance>
-<instance part="SUPPLY3" gate="GND" x="313.69" y="71.12" smashed="yes" rot="R180">
-<attribute name="VALUE" x="315.595" y="74.295" size="1.778" layer="96" rot="R180"/>
+<instance part="SUPPLY3" gate="GND" x="313.69" y="68.58" smashed="yes" rot="R180">
+<attribute name="VALUE" x="315.595" y="71.755" size="1.778" layer="96" rot="R180"/>
 </instance>
 <instance part="SERVO2" gate="A" x="302.895" y="35.56" smashed="yes" rot="R180">
 <attribute name="NAME" x="309.245" y="29.845" size="1.778" layer="95" rot="R180"/>
@@ -6566,8 +6579,8 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 </segment>
 <segment>
 <pinref part="SERVO1" gate="A" pin="3"/>
-<wire x1="305.435" y1="64.77" x2="313.69" y2="64.77" width="0.1524" layer="91"/>
-<wire x1="313.69" y1="64.77" x2="313.69" y2="68.58" width="0.1524" layer="91"/>
+<wire x1="305.435" y1="62.23" x2="313.69" y2="62.23" width="0.1524" layer="91"/>
+<wire x1="313.69" y1="62.23" x2="313.69" y2="66.04" width="0.1524" layer="91"/>
 <pinref part="SUPPLY3" gate="GND" pin="GND"/>
 </segment>
 <segment>
@@ -6691,8 +6704,8 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <net name="+7V" class="0">
 <segment>
 <pinref part="SERVO1" gate="A" pin="2"/>
-<wire x1="305.435" y1="62.23" x2="318.77" y2="62.23" width="0.1524" layer="91"/>
-<wire x1="318.77" y1="62.23" x2="318.77" y2="66.675" width="0.1524" layer="91"/>
+<wire x1="305.435" y1="59.69" x2="318.77" y2="59.69" width="0.1524" layer="91"/>
+<wire x1="318.77" y1="59.69" x2="318.77" y2="64.135" width="0.1524" layer="91"/>
 <pinref part="SUPPLY2" gate="G$1" pin="+7V"/>
 </segment>
 <segment>
@@ -6739,8 +6752,8 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 </net>
 <net name="FLY_RPWM" class="0">
 <segment>
-<wire x1="307.975" y1="143.51" x2="302.895" y2="143.51" width="0.1524" layer="91"/>
-<label x="295.1" y="144.095" size="1.27" layer="95"/>
+<wire x1="307.975" y1="146.05" x2="302.895" y2="146.05" width="0.1524" layer="91"/>
+<label x="295.1" y="146.635" size="1.27" layer="95"/>
 <pinref part="FLY" gate="&gt;NAME" pin="2"/>
 </segment>
 <segment>
@@ -6751,8 +6764,8 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 </net>
 <net name="FLY_LPWM" class="0">
 <segment>
-<wire x1="307.975" y1="140.97" x2="302.895" y2="140.97" width="0.1524" layer="91"/>
-<label x="295.1" y="141.23" size="1.27" layer="95"/>
+<wire x1="307.975" y1="143.51" x2="302.895" y2="143.51" width="0.1524" layer="91"/>
+<label x="295.1" y="143.77" size="1.27" layer="95"/>
 <pinref part="FLY" gate="&gt;NAME" pin="3"/>
 </segment>
 <segment>
@@ -6763,8 +6776,8 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 </net>
 <net name="S2S_EN" class="0">
 <segment>
-<wire x1="307.975" y1="128.27" x2="302.895" y2="128.27" width="0.1524" layer="91"/>
-<label x="297.64" y="129.365" size="1.27" layer="95"/>
+<wire x1="307.975" y1="130.81" x2="302.895" y2="130.81" width="0.1524" layer="91"/>
+<label x="297.64" y="131.905" size="1.27" layer="95"/>
 <pinref part="S2S" gate="&gt;NAME" pin="1"/>
 </segment>
 <segment>
@@ -6775,8 +6788,8 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 </net>
 <net name="S2S_RPWM" class="0">
 <segment>
-<wire x1="307.975" y1="125.73" x2="302.895" y2="125.73" width="0.1524" layer="91"/>
-<label x="297.64" y="126.5" size="1.27" layer="95"/>
+<wire x1="307.975" y1="128.27" x2="302.895" y2="128.27" width="0.1524" layer="91"/>
+<label x="297.64" y="129.04" size="1.27" layer="95"/>
 <pinref part="S2S" gate="&gt;NAME" pin="2"/>
 </segment>
 <segment>
@@ -6787,8 +6800,8 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 </net>
 <net name="S2S_LPWM" class="0">
 <segment>
-<wire x1="307.975" y1="123.19" x2="302.895" y2="123.19" width="0.1524" layer="91"/>
-<label x="297.64" y="123.635" size="1.27" layer="95"/>
+<wire x1="307.975" y1="125.73" x2="302.895" y2="125.73" width="0.1524" layer="91"/>
+<label x="297.64" y="126.175" size="1.27" layer="95"/>
 <pinref part="S2S" gate="&gt;NAME" pin="3"/>
 </segment>
 <segment>
@@ -6799,13 +6812,13 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 </net>
 <net name="MAIN_EN" class="0">
 <segment>
-<wire x1="307.975" y1="107.95" x2="302.895" y2="107.95" width="0.1524" layer="91"/>
-<label x="293.195" y="108.825" size="1.27" layer="95"/>
+<wire x1="307.975" y1="110.49" x2="302.895" y2="110.49" width="0.1524" layer="91"/>
+<label x="293.195" y="111.365" size="1.27" layer="95"/>
 <pinref part="MAIN" gate="&gt;NAME" pin="1"/>
 </segment>
 <segment>
-<wire x1="307.975" y1="146.05" x2="302.895" y2="146.05" width="0.1524" layer="91"/>
-<label x="295.275" y="146.685" size="1.27" layer="95"/>
+<wire x1="307.975" y1="148.59" x2="302.895" y2="148.59" width="0.1524" layer="91"/>
+<label x="295.275" y="149.225" size="1.27" layer="95"/>
 <pinref part="FLY" gate="&gt;NAME" pin="1"/>
 </segment>
 <segment>
@@ -6816,8 +6829,8 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 </net>
 <net name="MAIN_RPWM" class="0">
 <segment>
-<wire x1="307.975" y1="105.41" x2="302.895" y2="105.41" width="0.1524" layer="91"/>
-<label x="293.195" y="106.095" size="1.27" layer="95"/>
+<wire x1="307.975" y1="107.95" x2="302.895" y2="107.95" width="0.1524" layer="91"/>
+<label x="293.195" y="108.635" size="1.27" layer="95"/>
 <pinref part="MAIN" gate="&gt;NAME" pin="2"/>
 </segment>
 <segment>
@@ -6828,8 +6841,8 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 </net>
 <net name="MAIN_LPWM" class="0">
 <segment>
-<wire x1="307.975" y1="102.87" x2="302.895" y2="102.87" width="0.1524" layer="91"/>
-<label x="293.195" y="103.23" size="1.27" layer="95"/>
+<wire x1="307.975" y1="105.41" x2="302.895" y2="105.41" width="0.1524" layer="91"/>
+<label x="293.195" y="105.77" size="1.27" layer="95"/>
 <pinref part="MAIN" gate="&gt;NAME" pin="3"/>
 </segment>
 <segment>
@@ -6841,8 +6854,8 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <net name="IN3" class="0">
 <segment>
 <pinref part="DOME" gate="G$1" pin="1"/>
-<wire x1="307.975" y1="90.17" x2="302.895" y2="90.17" width="0.1524" layer="91"/>
-<label x="301.965" y="91.095" size="1.27" layer="95"/>
+<wire x1="307.975" y1="92.71" x2="302.895" y2="92.71" width="0.1524" layer="91"/>
+<label x="301.965" y="93.635" size="1.27" layer="95"/>
 </segment>
 <segment>
 <wire x1="199.39" y1="60.325" x2="194.31" y2="60.325" width="0.1524" layer="91"/>
@@ -6853,8 +6866,8 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <net name="IN4" class="0">
 <segment>
 <pinref part="DOME" gate="G$1" pin="2"/>
-<wire x1="307.975" y1="87.63" x2="302.895" y2="87.63" width="0.1524" layer="91"/>
-<label x="301.965" y="85.595" size="1.27" layer="95"/>
+<wire x1="307.975" y1="90.17" x2="302.895" y2="90.17" width="0.1524" layer="91"/>
+<label x="301.965" y="88.135" size="1.27" layer="95"/>
 </segment>
 <segment>
 <wire x1="199.39" y1="62.865" x2="194.31" y2="62.865" width="0.1524" layer="91"/>
@@ -6896,8 +6909,8 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <net name="SERVO_1" class="0">
 <segment>
 <pinref part="SERVO1" gate="A" pin="1"/>
-<wire x1="305.435" y1="59.69" x2="311.15" y2="59.69" width="0.1524" layer="91"/>
-<label x="311.785" y="59.055" size="1.27" layer="95"/>
+<wire x1="305.435" y1="57.15" x2="311.15" y2="57.15" width="0.1524" layer="91"/>
+<label x="311.785" y="56.515" size="1.27" layer="95"/>
 </segment>
 <segment>
 <pinref part="U$7" gate="G$1" pin="5"/>
