@@ -24,7 +24,7 @@ void readIMU()
   pitch = euler.y();
   roll = euler.z() * get_roll_multiplier();
 
-  rollOffset = get_roll_offset();
+//  rollOffset = get_roll_offset();
 }
 
 

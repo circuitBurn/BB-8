@@ -46,7 +46,7 @@
 #define S2S_POT A0
 #define S2S_MAX_TILT 26
 #define S2S_EASE 4.5
-#define S2S_OFFSET 1
+#define S2S_OFFSET 35
 
 // Dome
 #define domeSpinPWM1 10
@@ -136,7 +136,7 @@ float pitch, roll;
 // S2S pot smoothing
 // TODO: rename
 const int numReadings = 10;
-int readings[numReadings];
+int readings[numReadings] = {510, 510, 510, 510, 510, 510, 510, 510, 510, 510};
 int readIndex = 0;
 int total = 0;
 int average = 0;
@@ -146,7 +146,7 @@ void setup()
 {
   sbus_rx.Begin();
 
-  Serial.begin(115200);
+//  Serial.begin(115200);
 
   randomSeed(analogRead(0));
 
@@ -167,8 +167,8 @@ void setup()
   // Servos
   servos.begin();
   servos.setPWMFreq(60);
-  servos.writeMicroseconds(13, 1500);
-  servos.writeMicroseconds(14, 1500);
+//  servos.writeMicroseconds(13, 1500);
+//  servos.writeMicroseconds(14, 1500);
 
   // Motor Drivers
   driveController.Enable();
@@ -206,7 +206,7 @@ void setup()
   delay(500);
 
   // TODO: loadOffsets
-  pitchOffset = -0.55; //4.4;
+  pitchOffset = 4;//-0.55; //4.4;
   rollOffset = 7.88;
   potOffsetS2S = 3;
 
@@ -257,7 +257,7 @@ void dome_spin()
   if (domeRaw > 250 && domeRaw < 1700)
   {
     Setpoint4 = map(domeRaw, RC_MIN, RC_MAX, 0, 1024);
-    Input4 = analogRead(DOME_POT);
+    Input4 = analogRead(DOME_POT) + 15;
     PID4.Compute();
     domeSpeed = constrain((int)Output4, -255, 255);
   }
@@ -298,7 +298,7 @@ void dome_servos()
   target_pos_head1 = ch3a;
 
   easing_head1 = 100;          //modify this value for sensitivity
-  easing_head1 /= 1000;
+  easing_head1 /= 500;
 
   diff_head1 = target_pos_head1 - current_pos_head1;
 
@@ -331,7 +331,6 @@ void dome_servos()
   servos.writeMicroseconds(14, varServo2);
 }
 
-
 void side_to_side()
 {
   // TODO: sort this variable out!
@@ -356,7 +355,7 @@ void side_to_side()
 
   // Rolling average
   total = total - readings[readIndex];
-  readings[readIndex] = analogRead(S2S_POT) + 12;
+  readings[readIndex] = analogRead(S2S_POT) + S2S_OFFSET;
   total = total + readings[readIndex];
   readIndex = readIndex + 1;
 
