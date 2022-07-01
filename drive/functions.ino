@@ -3,6 +3,10 @@ float mapfloat(long x, long in_min, long in_max, long out_min, long out_max)
   return (float)(x - in_min) * (out_max - out_min) / (float)(in_max - in_min) + out_min;
 }
 
+
+/**
+ * 
+ */
 bool is_drive_enabled()
 {
   return map(sbus_rx.rx_channels()[CH_DRIVE_EN], RC_MIN, RC_MAX, 1, 0) == 1;
@@ -22,9 +26,7 @@ void readIMU()
 {
   imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   pitch = euler.y();
-  roll = euler.z() * get_roll_multiplier();
-
-//  rollOffset = get_roll_offset();
+  roll = euler.z();// * get_roll_multiplier();
 }
 
 
@@ -58,11 +60,6 @@ double get_pk1()
   return mapfloat(sbus_rx.rx_channels()[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 0, 30);
 }
 
-double get_roll_offset()
-{
-  return 0;
-  //  return mapfloat(sbus_rx.rx_channels()[CH_ROLL_OFFSET], RC_MIN, RC_MAX, -10, 10);
-}
 
 double get_roll_multiplier()
 {
@@ -72,9 +69,9 @@ double get_roll_multiplier()
 
 void debug_print()
 {
-  Serial.print("Drive Enabled: ");
-  Serial.print(is_drive_enabled());
-  Serial.print("\t");
+//  Serial.print("Drive Enabled: ");
+//  Serial.print(is_drive_enabled());
+//  Serial.print("\t");
 
   Serial.print("S2S: ");
   Serial.print(analogRead(S2S_POT));
