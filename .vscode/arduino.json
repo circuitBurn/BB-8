@@ -1,4 +1,6 @@
 {
     "board": "arduino:avr:mega",
-    "port": "COM8"
+    "port": "COM4",
+    "sketch": "drive\\drive.ino",
+    "output": "../output"
 }

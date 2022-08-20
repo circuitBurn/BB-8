@@ -62,8 +62,6 @@ void loadCalibration()
   pitchOffset = EEPROM.readFloat(0);
   rollOffset = EEPROM.readFloat(4);
   potOffsetS2S = EEPROM.readInt(8);
-  domeTiltPotOffset = EEPROM.readInt(10);
-  domeSpinOffset = EEPROM.readInt(12);
 
   if (isnan(pitchOffset))
   {
@@ -76,13 +74,5 @@ void loadCalibration()
   if (isnan(potOffsetS2S))
   {
     potOffsetS2S = 0;
-  }
-  if (isnan(domeTiltPotOffset))
-  {
-    domeTiltPotOffset = 0;
-  }
-  if (isnan(domeSpinOffset))
-  {
-    domeSpinOffset = 0;
   }
 }

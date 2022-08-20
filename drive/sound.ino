@@ -1,3 +1,13 @@
+int soundTriggerState;
+int lastSoundTriggerState = LOW;
+bool soundTriggerLatched = false;
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 50;
+int soundBank, soundTriggerRaw, soundRaw;
+
+/**
+ * Debounce self-resetting toggle switch and play a single sound.
+ */
 void sound_trigger()
 {
   soundTriggerRaw = sbus_rx.rx_channels()[CH_SOUND_TRIGGER];
@@ -30,6 +40,11 @@ void sound_trigger()
   lastSoundTriggerState = soundTriggerRaw;
 }
 
+/**
+ * Play a random sound from the selected sound bank switch.
+ * 
+ * They are sorted into BB-8 noises and general "Star Wars" sounds.
+ */
 void play_sound()
 {
   soundRaw = sbus_rx.rx_channels()[CH_SOUND_BANK];
