@@ -30,6 +30,19 @@ DriveMode get_drive_mode()
   }
 }
 
+DriveDirection get_drive_direction()
+{
+  int val = sbus_rx.rx_channels()[CH_DIRECTION];
+  if (val < RC_MAX)
+  {
+    return DriveDirection::Forward;
+  }
+  else
+  {
+    return DriveDirection::Reverse;
+  }
+}
+
 /**
    ReadIMU
 

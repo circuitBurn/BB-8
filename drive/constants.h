@@ -26,8 +26,8 @@
 #define CH_DOME_SPIN 5
 #define CH_SOUND_TRIGGER 7
 #define CH_SOUND_BANK 8
-// #define CH_IMU_SEL 10 // TODO: unused
 #define CH_DRIVE_EN 9
+#define CH_DIRECTION 10
 #define CH_ROLL_OFFSET 11
 #define CH_FLYWHEEL_EN 12
 
@@ -54,7 +54,7 @@
 #define S2S_POT_PIN A0
 #define S2S_MAX_ANGLE 55
 #define S2S_EASING 0.08
-#define S2S_OFFSET 20 // Negative value here will tilt the drive to the right
+#define S2S_OFFSET 10 // Negative value here will tilt the drive to the right
 
 /*****************************************************************************/
 // Dome servos and spin motor
@@ -65,6 +65,7 @@
 #define NOD_EASING 0.1
 #define TILT_EASING 0.075
 #define DOME_SPIN_SPEED 180 // 0 - 255
+#define DOME_POT_OFFSET 15
 
 /*****************************************************************************/
 // 

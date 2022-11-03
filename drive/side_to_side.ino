@@ -7,7 +7,8 @@ void side_to_side()
 {
   ch2 = sbus_rx.rx_channels()[CH_DRIVE_S2S];
 
-  s2s_target_position = map(ch2, RC_MIN, RC_MAX, S2S_MAX_ANGLE, -S2S_MAX_ANGLE);
+  //  s2s_target_position = map(ch2, RC_MIN, RC_MAX, S2S_MAX_ANGLE, -S2S_MAX_ANGLE);
+  s2s_target_position = get_target_s2s(ch2);
 
   // Calculate error
   s2s_position_difference = s2s_target_position - s2s_current_position;
@@ -56,9 +57,9 @@ void side_to_side()
   PID1.SetTunings(Pk1, Ik1, Dk1);
   PID1.Compute();
 
-//   Serial.print(motorsEnabled);
-//   Serial.print('\t');
-//   Serial.println(Output1);
+  //   Serial.print(motorsEnabled);
+  //   Serial.print('\t');
+  //   Serial.println(Output1);
 
   if (Output1 < 0)
   {
@@ -73,5 +74,17 @@ void side_to_side()
   else
   {
     s2sController.Stop();
+  }
+}
+
+int get_target_s2s(int val)
+{
+  if (driveDirection == DriveDirection::Forward)
+  {
+    return map(val, RC_MIN, RC_MAX, S2S_MAX_ANGLE, -S2S_MAX_ANGLE);
+  }
+  else // Reversed
+  {
+    return map(val, RC_MIN, RC_MAX, -S2S_MAX_ANGLE, S2S_MAX_ANGLE);
   }
 }

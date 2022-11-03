@@ -19,6 +19,7 @@ int ch3, ch4;
 */
 void dome_spin()
 {
+
   if (is_dome_rotation_enabled())
   {
     domeRaw = sbus_rx.rx_channels()[CH_DOME_SPIN];
@@ -26,7 +27,7 @@ void dome_spin()
     if (domeRaw > 250 && domeRaw < 1700)
     {
       Setpoint4 = map(domeRaw, RC_MIN, RC_MAX, 0, 1024);
-      Input4 = analogRead(DOME_POT_PIN) + 15;
+      Input4 = get_target_dome_position(analogRead(DOME_POT_PIN));
       PID4.Compute();
       domeSpeed = constrain((int)Output4, -255, 255);
     }
@@ -62,7 +63,6 @@ void dome_spin()
     analogWrite(DOME_SPIN_A_PIN, 0);
     analogWrite(DOME_SPIN_B_PIN, 0);
   }
-
 }
 
 void dome_servos()
@@ -71,7 +71,8 @@ void dome_servos()
   {
     // Forwards-backwards
     ch3 = sbus_rx.rx_channels()[CH_DOME_TILT_Y];
-    targetNod = map(ch3, RC_MIN, RC_MAX, 180, 0);
+    //    targetNod = map(ch3, RC_MIN, RC_MAX, 180, 0);
+    targetNod = get_target_dome_nod(ch3);
 
     // TODO: pitch correction
     targetNod = targetNod + (pitch * 4.5);
@@ -89,7 +90,8 @@ void dome_servos()
 
     // Left-right
     ch4 = sbus_rx.rx_channels()[CH_DOME_TILT_X];
-    targetSide = map(ch4, RC_MIN, RC_MAX, 60, -60);
+    //    targetSide = map(ch4, RC_MIN, RC_MAX, 60, -60);
+    targetSide = get_target_dome_tilt(ch4);
 
     diffSide = targetSide - currentSide;
 
@@ -118,5 +120,41 @@ void dome_servos()
   else
   {
     Serial.println("Dome movement is disabled");
+  }
+}
+
+int get_target_dome_position(int val)
+{
+  if (driveDirection == DriveDirection::Forward)
+  {
+    return val + DOME_POT_OFFSET;
+  }
+  else // Reversed
+  {
+    return (val + 512 + DOME_POT_OFFSET) % 1024;
+  }
+}
+
+int get_target_dome_nod(int val)
+{
+  if (driveDirection == DriveDirection::Forward)
+  {
+    return map(ch3, RC_MIN, RC_MAX, 180, 0);
+  }
+  else // Reversed
+  {
+    return map(ch3, RC_MIN, RC_MAX, 0, 180);
+  }
+}
+
+int get_target_dome_tilt(int val)
+{
+  if (driveDirection == DriveDirection::Forward)
+  {
+    return map(val, RC_MIN, RC_MAX, 60, -60);
+  }
+  else // Reversed
+  {
+    return map(val, RC_MIN, RC_MAX, -60, 60);
   }
 }

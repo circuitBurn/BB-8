@@ -96,11 +96,14 @@ int average = 0;
 
 DriveMode driveMode = DriveMode::Disabled;
 
+// Specifies the direction of BB-8
+DriveDirection driveDirection = DriveDirection::Forward;
+
 void setup()
 {
   sbus_rx.Begin();
 
-  Serial.begin(115200);
+//  Serial.begin(115200);
 
   randomSeed(analogRead(0));
 
@@ -181,6 +184,7 @@ void loop()
   if (sbus_rx.Read())
   {
     driveMode = get_drive_mode();
+    driveDirection = get_drive_direction();
 
     if (driveMode == DriveMode::Enabled)
     {

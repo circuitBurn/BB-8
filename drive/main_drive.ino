@@ -5,8 +5,10 @@ int driveRaw, driveSpeed;
 */
 void main_drive()
 {
+  //  driveRaw = sbus_rx.rx_channels()[CH_DRIVE_MAIN];
+  //  driveSpeed = map(driveRaw, RC_MIN, RC_MAX, MAX_DRIVE_SPEED, -MAX_DRIVE_SPEED);
   driveRaw = sbus_rx.rx_channels()[CH_DRIVE_MAIN];
-  driveSpeed = map(driveRaw, RC_MIN, RC_MAX, MAX_DRIVE_SPEED, -MAX_DRIVE_SPEED);
+  driveSpeed = get_drive_speed(driveRaw);
 
   Setpoint3 = constrain(driveSpeed, -55, 55);
   Input3 = pitch + pitchOffset;
@@ -25,5 +27,20 @@ void main_drive()
   else
   {
     driveController.Stop();
+  }
+}
+
+/**
+ * Returns the drive speed oriented to the specified "drive direction"
+ */
+int get_drive_speed(int driveSpeedRaw)
+{
+  if (driveDirection == DriveDirection::Forward)
+  { 
+    return map(driveSpeedRaw, RC_MIN, RC_MAX, MAX_DRIVE_SPEED, -MAX_DRIVE_SPEED);
+  }
+  else
+  {
+    return map(driveSpeedRaw, RC_MIN, RC_MAX, -MAX_DRIVE_SPEED, MAX_DRIVE_SPEED);
   }
 }
