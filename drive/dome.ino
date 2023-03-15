@@ -22,7 +22,7 @@ void dome_spin()
 
   if (is_dome_rotation_enabled())
   {
-    domeRaw = sbus_rx.rx_channels()[CH_DOME_SPIN];
+    domeRaw = sbus_rx.data().ch[CH_DOME_SPIN];
 
     if (domeRaw > 250 && domeRaw < 1700)
     {
@@ -70,7 +70,7 @@ void dome_servos()
   if (is_dome_movement_enabled())
   {
     // Forwards-backwards
-    ch3 = sbus_rx.rx_channels()[CH_DOME_TILT_Y];
+    ch3 = sbus_rx.data().ch[CH_DOME_TILT_Y];
     //    targetNod = map(ch3, RC_MIN, RC_MAX, 180, 0);
     targetNod = get_target_dome_nod(ch3);
 
@@ -89,7 +89,7 @@ void dome_servos()
     varServo2 = currentNod;
 
     // Left-right
-    ch4 = sbus_rx.rx_channels()[CH_DOME_TILT_X];
+    ch4 = sbus_rx.data().ch[CH_DOME_TILT_X];
     //    targetSide = map(ch4, RC_MIN, RC_MAX, 60, -60);
     targetSide = get_target_dome_tilt(ch4);
 

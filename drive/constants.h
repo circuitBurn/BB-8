@@ -54,7 +54,7 @@
 #define S2S_POT_PIN A0
 #define S2S_MAX_ANGLE 55
 #define S2S_EASING 0.08
-#define S2S_OFFSET 10 // Negative value here will tilt the drive to the right
+#define S2S_OFFSET -3 // Negative value here will tilt the drive to the right
 
 /*****************************************************************************/
 // Dome servos and spin motor
@@ -62,11 +62,7 @@
 #define DOME_SPIN_A_PIN 10
 #define DOME_SPIN_B_PIN 11
 #define DOME_POT_PIN A4
-#define NOD_EASING 0.1
-#define TILT_EASING 0.075
+#define NOD_EASING 0.05
+#define TILT_EASING 0.05
 #define DOME_SPIN_SPEED 180 // 0 - 255
-#define DOME_POT_OFFSET 15
-
-/*****************************************************************************/
-// 
-/*****************************************************************************/
+#define DOME_POT_OFFSET -60

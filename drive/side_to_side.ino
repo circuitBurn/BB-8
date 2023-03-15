@@ -5,7 +5,7 @@ int s2s_position_difference;
 
 void side_to_side()
 {
-  ch2 = sbus_rx.rx_channels()[CH_DRIVE_S2S];
+  ch2 = sbus_rx.data().ch[CH_DRIVE_S2S];
 
   //  s2s_target_position = map(ch2, RC_MIN, RC_MAX, S2S_MAX_ANGLE, -S2S_MAX_ANGLE);
   s2s_target_position = get_target_s2s(ch2);

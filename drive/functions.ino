@@ -10,12 +10,12 @@ float mapfloat(long x, long in_min, long in_max, long out_min, long out_max)
  */
 bool is_drive_enabled()
 {
-  return map(sbus_rx.rx_channels()[CH_DRIVE_EN], RC_MIN, RC_MAX, 0, 1) == 1;
+  return map(sbus_rx.data().ch[CH_DRIVE_EN], RC_MIN, RC_MAX, 0, 1) == 1;
 }
 
 DriveMode get_drive_mode()
 {
-  int driveVal = sbus_rx.rx_channels()[CH_DRIVE_EN];
+  int driveVal = sbus_rx.data().ch[CH_DRIVE_EN];
   if (driveVal == RC_MIN)
   {
     return DriveMode::Enabled;
@@ -32,7 +32,7 @@ DriveMode get_drive_mode()
 
 DriveDirection get_drive_direction()
 {
-  int val = sbus_rx.rx_channels()[CH_DIRECTION];
+  int val = sbus_rx.data().ch[CH_DIRECTION];
   if (val < RC_MAX)
   {
     return DriveDirection::Forward;
@@ -108,12 +108,12 @@ bool is_dome_movement_enabled()
 */
 double get_pk1()
 {
-  return mapfloat(sbus_rx.rx_channels()[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 0, 30);
+  return mapfloat(sbus_rx.data().ch[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 0, 30);
 }
 
 double get_roll_multiplier()
 {
-  return mapfloat(sbus_rx.rx_channels()[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 0, 1);
+  return mapfloat(sbus_rx.data().ch[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 0, 1);
 }
 
 void debug_print()

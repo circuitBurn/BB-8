@@ -10,7 +10,7 @@ int soundBank, soundTriggerRaw, soundRaw;
  */
 void sound_trigger()
 {
-  soundTriggerRaw = sbus_rx.rx_channels()[CH_SOUND_TRIGGER];
+  soundTriggerRaw = sbus_rx.data().ch[CH_SOUND_TRIGGER];
 
   if (soundTriggerRaw != lastSoundTriggerState)
   {
@@ -47,16 +47,16 @@ void sound_trigger()
  */
 void play_sound()
 {
-  soundRaw = sbus_rx.rx_channels()[CH_SOUND_BANK];
+  soundRaw = sbus_rx.data().ch[CH_SOUND_BANK];
   soundBank = map(soundRaw, 172, 1811, 0, 2);
   if (soundBank == 2)
   {
-    // Star Wars sounds
-    myDFPlayer.play(random(50, 53));
+    // Short sounds
+    myDFPlayer.play(random(13, 47));
   }
   else
   {
-    // BB-8 Sounds
-    myDFPlayer.play(random(0, 49));
+    // Long sounds
+    myDFPlayer.play(random(0, 12));
   }
 }

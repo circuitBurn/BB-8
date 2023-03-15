@@ -72,7 +72,8 @@ bool motorsEnabled = true;
 Adafruit_PWMServoDriver servos = Adafruit_PWMServoDriver();
 
 // SBUS
-SbusRx sbus_rx(&Serial2);
+bfs::SbusRx sbus_rx(&Serial2);
+//SbusRx sbus_rx(&Serial2);
 
 // Sound
 DFRobotDFPlayerMini myDFPlayer;
@@ -159,7 +160,7 @@ void setup()
   }
 
   // TODO: loadOffsets
-  pitchOffset = 4; //-0.55; //4.4;
+  pitchOffset = 0; //-0.55; //4.4;
   rollOffset = 5;//-3.6; // Positive tilts left
   potOffsetS2S = 3;
 
@@ -174,7 +175,7 @@ void setup()
   Serial1.begin(9600);
   myDFPlayer.begin(Serial1);
   myDFPlayer.volume(30);
-  myDFPlayer.play(1);
+  myDFPlayer.play(31);
 }
 
 void loop()

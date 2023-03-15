@@ -5,9 +5,9 @@ int driveRaw, driveSpeed;
 */
 void main_drive()
 {
-  //  driveRaw = sbus_rx.rx_channels()[CH_DRIVE_MAIN];
+  //  driveRaw = sbus_rx.data().ch[CH_DRIVE_MAIN];
   //  driveSpeed = map(driveRaw, RC_MIN, RC_MAX, MAX_DRIVE_SPEED, -MAX_DRIVE_SPEED);
-  driveRaw = sbus_rx.rx_channels()[CH_DRIVE_MAIN];
+  driveRaw = sbus_rx.data().ch[CH_DRIVE_MAIN];
   driveSpeed = get_drive_speed(driveRaw);
 
   Setpoint3 = constrain(driveSpeed, -55, 55);

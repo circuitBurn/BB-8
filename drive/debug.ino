@@ -1,11 +1,11 @@
 void debug_rc_inputs()
 {
-  for (int i = 0; i < sbus_rx.rx_channels().size(); i++)
-  {
-    Serial.print(sbus_rx.rx_channels()[i]);
-    Serial.print("\t");
-  }
-  Serial.println();
+//  for (int i = 0; i < sbus_rx.data().size(); i++)
+//  {
+//    Serial.print(sbus_rx.data().ch[i]);
+//    Serial.print("\t");
+//  }
+//  Serial.println();
 }
 
 void debug_dome_outputs(int servo1, int servo2)
