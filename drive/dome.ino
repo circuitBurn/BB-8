@@ -27,7 +27,7 @@ void dome_spin()
     if (domeRaw > 250 && domeRaw < 1700)
     {
       Setpoint4 = map(domeRaw, RC_MIN, RC_MAX, 0, 1024);
-      Input4 = get_target_dome_position(analogRead(DOME_POT_PIN));
+      Input4 = get_target_dome_rotation(analogRead(DOME_POT_PIN));
       PID4.Compute();
       domeSpeed = constrain((int)Output4, -255, 255);
     }
@@ -71,11 +71,10 @@ void dome_servos()
   {
     // Forwards-backwards
     ch3 = sbus_rx.data().ch[CH_DOME_TILT_Y];
-    //    targetNod = map(ch3, RC_MIN, RC_MAX, 180, 0);
     targetNod = get_target_dome_nod(ch3);
 
     // TODO: pitch correction
-    targetNod = targetNod + (pitch * 4.5);
+//    targetNod = targetNod + (pitch * 4.5);
 
     diffNod = targetNod - currentNod;
 
@@ -90,7 +89,6 @@ void dome_servos()
 
     // Left-right
     ch4 = sbus_rx.data().ch[CH_DOME_TILT_X];
-    //    targetSide = map(ch4, RC_MIN, RC_MAX, 60, -60);
     targetSide = get_target_dome_tilt(ch4);
 
     diffSide = targetSide - currentSide;
@@ -119,11 +117,11 @@ void dome_servos()
   }
   else
   {
-    Serial.println("Dome movement is disabled");
+//    Serial.println("Dome movement is disabled");
   }
 }
 
-int get_target_dome_position(int val)
+int get_target_dome_rotation(int val)
 {
   if (driveDirection == DriveDirection::Forward)
   {

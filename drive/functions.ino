@@ -95,7 +95,7 @@ bool is_flywheel_enabled()
 
 bool is_dome_rotation_enabled()
 {
-  return driveMode == DriveMode::Enabled || driveMode == DriveMode::Static;
+  return true;//driveMode == DriveMode::Enabled || driveMode == DriveMode::Static;
 }
 
 bool is_dome_movement_enabled()
@@ -108,7 +108,7 @@ bool is_dome_movement_enabled()
 */
 double get_pk1()
 {
-  return mapfloat(sbus_rx.data().ch[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 0, 30);
+  return mapfloat(sbus_rx.data().ch[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 10, 30);
 }
 
 double get_roll_multiplier()
@@ -122,36 +122,36 @@ void debug_print()
   //  Serial.print(is_drive_enabled());
   //  Serial.print("\t");
 
-  Serial.print("S2S: ");
-  Serial.print(analogRead(S2S_POT_PIN));
-  Serial.print("\t");
-
-  Serial.print("S2S mapped: ");
-  Serial.print(map(analogRead(S2S_POT_PIN), 0, 1024, -135, 135));
-  Serial.print("\t");
-
-  Serial.print("PK1: ");
-  Serial.print(get_pk1());
-  Serial.print("\t");
-  //  Serial.print("PK2: ");
-  //  Serial.print(get_pk2());
-  //  Serial.print("\t");
-
-  Serial.print("Pitch: ");
-  Serial.print(pitch);
-  Serial.print("\t");
-
-  Serial.print("Roll: ");
-  Serial.print(roll);
-  Serial.print("\t");
-
-  //  Serial.print("Roll Offset: ");
-  //  Serial.print(get_roll_offset());
-  //  Serial.print("\t");
-
-  //  Serial.print("Roll Multiplier: ");
-  //  Serial.print(get_roll_multiplier());
-  //  Serial.print("\t");
-
-  Serial.println();
+//  Serial.print("S2S: ");
+//  Serial.print(analogRead(S2S_POT_PIN));
+//  Serial.print("\t");
+//
+//  Serial.print("S2S mapped: ");
+//  Serial.print(map(analogRead(S2S_POT_PIN), 0, 1024, -135, 135));
+//  Serial.print("\t");
+//
+//  Serial.print("PK1: ");
+//  Serial.print(get_pk1());
+//  Serial.print("\t");
+//  //  Serial.print("PK2: ");
+//  //  Serial.print(get_pk2());
+//  //  Serial.print("\t");
+//
+//  Serial.print("Pitch: ");
+//  Serial.print(pitch);
+//  Serial.print("\t");
+//
+//  Serial.print("Roll: ");
+//  Serial.print(roll);
+//  Serial.print("\t");
+//
+//  //  Serial.print("Roll Offset: ");
+//  //  Serial.print(get_roll_offset());
+//  //  Serial.print("\t");
+//
+//  //  Serial.print("Roll Multiplier: ");
+//  //  Serial.print(get_roll_multiplier());
+//  //  Serial.print("\t");
+//
+//  Serial.println();
 }

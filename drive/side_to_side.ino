@@ -21,7 +21,6 @@ void side_to_side()
 
   Setpoint2 = s2s_current_position;
 
-  // TODO: Rolling average
   total = total - readings[readIndex];
   readings[readIndex] = analogRead(S2S_POT_PIN) + S2S_OFFSET;
   total = total + readings[readIndex];
@@ -37,10 +36,7 @@ void side_to_side()
   average = (float)total / (float)numReadings;
   pot = average;
 
-  //  pot = analogRead(S2S_POT_PIN) + S2S_OFFSET;
-
   Input2 = (roll + rollOffset) * -1;
-  //  Input2 = roll * -1;
   Setpoint2 = constrain(Setpoint2, -S2S_MAX_ANGLE, S2S_MAX_ANGLE);
   PID2.Compute();
 
@@ -56,10 +52,6 @@ void side_to_side()
   Pk1 = get_pk1();
   PID1.SetTunings(Pk1, Ik1, Dk1);
   PID1.Compute();
-
-  //   Serial.print(motorsEnabled);
-  //   Serial.print('\t');
-  //   Serial.println(Output1);
 
   if (Output1 < 0)
   {

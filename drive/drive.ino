@@ -36,21 +36,21 @@
 #include "enums.h"
 
 // PID1 is for the side to side tilt
-double Pk1 = 14; // 15.0;
-double Ik1 = 0.0;
-double Dk1 = 0; // 0.5;
+double Pk1 = 20;
+double Ik1 = 0;
+double Dk1 = 0;
 double Setpoint1, Input1, Output1, Output1a;
 PID PID1(&Input1, &Output1, &Setpoint1, Pk1, Ik1, Dk1, DIRECT);
 
 // PID2 for S2S stability
-double Pk2 = 1.5; // 0.6;
-double Ik2 = 0;
-double Dk2 = 0.025; // 0.03;
+double Pk2 = 0.5;
+double Ik2 = 0.01;
+double Dk2 = 0.1;
 double Setpoint2, Input2, Output2, Output2a;
 PID PID2(&Input2, &Output2, &Setpoint2, Pk2, Ik2, Dk2, DIRECT);
 
 // PID3 for the main drive
-double Pk3 = 2.5;
+double Pk3 = 1.0;//1.75;
 double Ik3 = 0.0;
 double Dk3 = 0.01;
 double Setpoint3, Input3, Output3, Output3a;
@@ -73,7 +73,6 @@ Adafruit_PWMServoDriver servos = Adafruit_PWMServoDriver();
 
 // SBUS
 bfs::SbusRx sbus_rx(&Serial2);
-//SbusRx sbus_rx(&Serial2);
 
 // Sound
 DFRobotDFPlayerMini myDFPlayer;
@@ -88,9 +87,8 @@ Adafruit_BNO055 bno = Adafruit_BNO055(-1, 0x28);
 float pitch, roll;
 
 // S2S pot smoothing
-// TODO: rename
-const int numReadings = 10;
-int readings[numReadings] = {510, 510, 510, 510, 510, 510, 510, 510, 510, 510};
+const int numReadings = 4;
+int readings[numReadings] = { 510, 510, 510, 510 };
 int readIndex = 0;
 int total = 0;
 int average = 0;
@@ -104,7 +102,7 @@ void setup()
 {
   sbus_rx.Begin();
 
-//  Serial.begin(115200);
+  //  Serial.begin(9600);
 
   randomSeed(analogRead(0));
 
@@ -125,6 +123,8 @@ void setup()
   // Servos
   servos.begin();
   servos.setPWMFreq(60);
+  servos.writeMicroseconds(13, 1500);
+  servos.writeMicroseconds(14, 1500);
 
   // Motor Drivers
   driveController.Enable();
@@ -154,20 +154,19 @@ void setup()
   /* Initialise the IMU */
   if (!bno.begin())
   {
-    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    //    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
     while (1)
       ;
   }
 
   // TODO: loadOffsets
-  pitchOffset = 0; //-0.55; //4.4;
-  rollOffset = 5;//-3.6; // Positive tilts left
+  pitchOffset = 0;
+  rollOffset = 3; // Positive tilts left
   potOffsetS2S = 3;
 
   // Fill the smoothing readings with the initial pot offset
   for (int thisReading = 0; thisReading < numReadings; thisReading++)
   {
-    //    readings[thisReading] = analogRead(S2S_POT_PIN) + S2S_OFFSET;
     readings[thisReading] = potOffsetS2S;
   }
 
@@ -209,41 +208,5 @@ void loop()
       // Disabled
       disable_drive();
     }
-    //    // debug_rc_inputs();
-    //    DriveMode mode = get_drive_mode();
-    //
-    //    switch (mode)
-    //    {
-    //    case DriveMode::Enabled:
-    //      enable_drive();
-    //      main_drive();
-    //      flywheel();
-    //      side_to_side();
-    //      break;
-    //    }
-    //    if (mode ==)
-    //    {
-    //      disable_drive();
-    //    }
-
-    //     motorsEnabled = is_drive_enabled();
-    //     if (motorsEnabled)
-    //     {
-    //       enable_drive();
-    //       main_drive();
-    //       flywheel();
-    //       side_to_side();
-    //     }
-    //     else
-    //     {
-    //       disable_drive();
-    //     }
-    //     dome_spin();
-    //     dome_servos();
-    //     sound_trigger();
-
-    // Serial.print(sbus_rx.lost_frame());
-    // Serial.print("\t");
-    // Serial.println(sbus_rx.failsafe());
   }
 }
