@@ -14,7 +14,7 @@ void side_to_side()
   s2s_position_difference = s2s_target_position - s2s_current_position;
 
   // Avoid any strange zero condition
-  if ( s2s_position_difference != 0.00 )
+  if (s2s_position_difference != 0.00)
   {
     s2s_current_position += s2s_position_difference * S2S_EASING;
   }
