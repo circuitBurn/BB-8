@@ -22,7 +22,6 @@
       https://www.facebook.com/groups/863379917081398
 */
 #include "Arduino.h"
-#include <EEPROMex.h>
 #include "sbus.h"
 #include "DFRobotDFPlayerMini.h"
 #include "BTS7960.h"
@@ -34,23 +33,24 @@
 
 #include "constants.h"
 #include "enums.h"
+#include "offsets.h"
 
 // PID1 is for the side to side tilt
-double Pk1 = 20;
+double Pk1 = 24;
 double Ik1 = 0;
 double Dk1 = 0;
 double Setpoint1, Input1, Output1, Output1a;
 PID PID1(&Input1, &Output1, &Setpoint1, Pk1, Ik1, Dk1, DIRECT);
 
 // PID2 for S2S stability
-double Pk2 = 0.5;
-double Ik2 = 0.01;
-double Dk2 = 0.1;
+double Pk2 = 1.0;
+double Ik2 = 0.0;
+double Dk2 = 0.0;
 double Setpoint2, Input2, Output2, Output2a;
 PID PID2(&Input2, &Output2, &Setpoint2, Pk2, Ik2, Dk2, DIRECT);
 
 // PID3 for the main drive
-double Pk3 = 1.0;//1.75;
+double Pk3 = 1.5;
 double Ik3 = 0.0;
 double Dk3 = 0.01;
 double Setpoint3, Input3, Output3, Output3a;
@@ -62,11 +62,6 @@ double Ik4 = 0.1;
 double Dk4 = 0.01;
 double Setpoint4, Input4, Output4;
 PID PID4(&Input4, &Output4, &Setpoint4, Pk4, Ik4, Dk4, DIRECT);
-
-// Offsets
-float pitchOffset, rollOffset, potOffsetS2S;
-
-bool motorsEnabled = true;
 
 // Dome Servos
 Adafruit_PWMServoDriver servos = Adafruit_PWMServoDriver();
@@ -87,24 +82,28 @@ Adafruit_BNO055 bno = Adafruit_BNO055(-1, 0x28);
 float pitch, roll;
 
 // S2S pot smoothing
-const int numReadings = 4;
-int readings[numReadings] = { 510, 510, 510, 510 };
-int readIndex = 0;
-int total = 0;
-int average = 0;
+//const int numReadings = 4;
+//int readings[numReadings] = { 510, 510, 510, 510 };
+//int readIndex = 0;
+//int total = 0;
+//int average = 0;
 
 DriveMode driveMode = DriveMode::Disabled;
 
 // Specifies the direction of BB-8
 DriveDirection driveDirection = DriveDirection::Forward;
 
+Offsets offsets = Offsets();
+
 void setup()
 {
   sbus_rx.Begin();
 
-  //  Serial.begin(9600);
-
   randomSeed(analogRead(0));
+
+  // TODO: debug only
+  offsets.set(1, -3);
+  offsets.initialize();
 
   pinMode(DRIVE_R_PWM_PIN, OUTPUT);
   pinMode(DRIVE_L_PWM_PIN, OUTPUT);
@@ -119,12 +118,6 @@ void setup()
 
   pinMode(DOME_SPIN_A_PIN, OUTPUT);
   pinMode(DOME_SPIN_B_PIN, OUTPUT);
-
-  // Servos
-  servos.begin();
-  servos.setPWMFreq(60);
-  servos.writeMicroseconds(13, 1500);
-  servos.writeMicroseconds(14, 1500);
 
   // Motor Drivers
   driveController.Enable();
@@ -154,20 +147,8 @@ void setup()
   /* Initialise the IMU */
   if (!bno.begin())
   {
-    //    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
     while (1)
       ;
-  }
-
-  // TODO: loadOffsets
-  pitchOffset = 0;
-  rollOffset = 3; // Positive tilts left
-  potOffsetS2S = 3;
-
-  // Fill the smoothing readings with the initial pot offset
-  for (int thisReading = 0; thisReading < numReadings; thisReading++)
-  {
-    readings[thisReading] = potOffsetS2S;
   }
 
   // Sound
@@ -175,6 +156,12 @@ void setup()
   myDFPlayer.begin(Serial1);
   myDFPlayer.volume(30);
   myDFPlayer.play(31);
+
+  // Servos
+  servos.begin();
+  servos.setPWMFreq(60);
+  //  servos.writeMicroseconds(13, 1500);
+  //  servos.writeMicroseconds(14, 1500);
 }
 
 void loop()

@@ -31,6 +31,7 @@
 #define CH_DIRECTION 10
 #define CH_ROLL_OFFSET 11
 #define CH_FLYWHEEL_EN 12
+#define CH_S2S_OFFSET 13
 
 /*****************************************************************************/
 // Main drive motor controller
@@ -53,9 +54,9 @@
 #define S2S_L_PWM_PIN 7
 #define S2S_EN_PIN 33
 #define S2S_POT_PIN A0
-#define S2S_MAX_ANGLE 74
+#define S2S_MAX_ANGLE 40
 #define S2S_EASING 0.9
-#define S2S_OFFSET 0 // Negative value here will tilt the drive to the right
+//#define S2S_OFFSET 20 // Negative value here will tilt the drive to the right
 
 /*****************************************************************************/
 // Dome servos and spin motor
@@ -67,3 +68,4 @@
 #define TILT_EASING 0.04
 #define DOME_SPIN_SPEED 180 // 0 - 255
 #define DOME_POT_OFFSET -60
+#define MAX_DOME_S2S_ANGLE 70

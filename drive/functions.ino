@@ -55,8 +55,8 @@ DriveDirection get_drive_direction()
 void readIMU()
 {
   imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  pitch = euler.y();
-  roll = euler.z(); // * get_roll_multiplier();
+  pitch = euler.y() + offsets.pitch();
+  roll = euler.z() + offsets.roll(); 
 }
 
 bool in_rc_deadband(int value)
@@ -108,7 +108,12 @@ bool is_dome_movement_enabled()
 */
 double get_pk1()
 {
-  return mapfloat(sbus_rx.data().ch[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 10, 30);
+  return mapfloat(sbus_rx.data().ch[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 0, 35);
+}
+
+double get_pk2()
+{
+  return mapfloat(sbus_rx.data().ch[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 0, 4);
 }
 
 double get_roll_multiplier()
