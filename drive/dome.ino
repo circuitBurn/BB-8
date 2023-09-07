@@ -149,10 +149,10 @@ int get_target_dome_tilt(int val)
 {
   if (driveDirection == DriveDirection::Forward)
   {
-    return map(val, RC_MIN, RC_MAX, 60, -60);
+    return map(val, RC_MIN, RC_MAX, MAX_DOME_S2S_ANGLE, -MAX_DOME_S2S_ANGLE);
   }
   else // Reversed
   {
-    return map(val, RC_MIN, RC_MAX, -60, 60);
+    return map(val, RC_MIN, RC_MAX, -MAX_DOME_S2S_ANGLE, MAX_DOME_S2S_ANGLE);
   }
 }

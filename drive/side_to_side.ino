@@ -2,12 +2,16 @@ int ch2, pot;
 int s2s_current_position;
 int s2s_target_position;
 int s2s_position_difference;
+double s2s_offset;
 
 void side_to_side()
 {
   ch2 = sbus_rx.data().ch[CH_DRIVE_S2S];
 
-  //  s2s_target_position = map(ch2, RC_MIN, RC_MAX, S2S_MAX_ANGLE, -S2S_MAX_ANGLE);
+  // Get the s2s offset from the right slider
+  s2s_offset = sbus_rx.data().ch[CH_S2S_OFFSET];
+  s2s_offset = map(s2s_offset, RC_MIN, RC_MAX, -10, 50);
+
   s2s_target_position = get_target_s2s(ch2);
 
   // Calculate error
@@ -21,23 +25,12 @@ void side_to_side()
 
   Setpoint2 = s2s_current_position;
 
-  total = total - readings[readIndex];
-  readings[readIndex] = analogRead(S2S_POT_PIN) + S2S_OFFSET;
-  total = total + readings[readIndex];
-  readIndex = readIndex + 1;
+  pot = analogRead(S2S_POT_PIN) + s2s_offset;
 
-  // Wrap to beginning
-  if (readIndex >= numReadings)
-  {
-    readIndex = 0;
-  }
-
-  // calculate the average:
-  average = (float)total / (float)numReadings;
-  pot = average;
-
-  Input2 = (roll + rollOffset) * -1;
+  Input2 = roll;
   Setpoint2 = constrain(Setpoint2, -S2S_MAX_ANGLE, S2S_MAX_ANGLE);
+  //  Pk2 = get_pk2();
+  //  PID2.SetTunings(Pk2, Ik2, Dk2);
   PID2.Compute();
 
   Setpoint1 = Output2;

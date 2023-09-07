@@ -9,7 +9,7 @@ void main_drive()
   driveSpeed = get_drive_speed(driveRaw);
 
   Setpoint3 = constrain(driveSpeed, -MAX_DRIVE_SPEED, MAX_DRIVE_SPEED);
-  Input3 = pitch + pitchOffset;
+  Input3 = pitch;
   PID3.Compute();
 
   if (Output3 >= 1)
