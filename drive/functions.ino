@@ -55,8 +55,8 @@ DriveDirection get_drive_direction()
 void readIMU()
 {
   imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  pitch = euler.y() + offsets.pitch();
-  roll = euler.z() + offsets.roll(); 
+  pitch = euler.y();// + offsets.pitch();
+  roll = euler.z();// + offsets.roll(); 
 }
 
 bool in_rc_deadband(int value)
