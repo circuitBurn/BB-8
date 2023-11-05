@@ -32,6 +32,7 @@
 #define CH_ROLL_OFFSET 11
 #define CH_FLYWHEEL_EN 12
 #define CH_S2S_OFFSET 13
+#define CH_RANDOM_SOUND 14
 
 /*****************************************************************************/
 // Main drive motor controller
@@ -39,7 +40,7 @@
 #define DRIVE_R_PWM_PIN 13
 #define DRIVE_L_PWM_PIN 12
 #define DRIVE_EN_PIN 29
-#define MAX_DRIVE_SPEED 100 // 0 - 255
+#define MAX_DRIVE_SPEED 125 // 0 - 255
 
 /*****************************************************************************/
 // Flywheel motor controller
@@ -66,6 +67,6 @@
 #define DOME_POT_PIN A4
 #define NOD_EASING 0.04
 #define TILT_EASING 0.04
-#define DOME_SPIN_SPEED 180 // 0 - 255
+#define DOME_SPIN_SPEED 200 // 0 - 255
 #define DOME_POT_OFFSET -60
-#define MAX_DOME_S2S_ANGLE 70
+#define MAX_DOME_S2S_ANGLE 72

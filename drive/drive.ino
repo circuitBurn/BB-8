@@ -33,7 +33,7 @@
 
 #include "constants.h"
 #include "enums.h"
-#include "offsets.h"
+//#include "offsets.h"
 
 // PID1 is for the side to side tilt
 double Pk1 = 24;
@@ -93,7 +93,7 @@ DriveMode driveMode = DriveMode::Disabled;
 // Specifies the direction of BB-8
 DriveDirection driveDirection = DriveDirection::Forward;
 
-Offsets offsets = Offsets();
+//Offsets offsets = Offsets();
 
 void setup()
 {
@@ -102,8 +102,8 @@ void setup()
   randomSeed(analogRead(0));
 
   // TODO: debug only
-  offsets.set(1, -3);
-  offsets.initialize();
+//  offsets.set(1, -3);
+//  offsets.initialize();
 
   pinMode(DRIVE_R_PWM_PIN, OUTPUT);
   pinMode(DRIVE_L_PWM_PIN, OUTPUT);
@@ -155,7 +155,7 @@ void setup()
   Serial1.begin(9600);
   myDFPlayer.begin(Serial1);
   myDFPlayer.volume(30);
-  myDFPlayer.play(31);
+  myDFPlayer.play(1);
 
   // Servos
   servos.begin();
@@ -181,14 +181,14 @@ void loop()
       side_to_side();
       dome_spin();
       dome_servos();
-      sound_trigger();
+      check_sound_trigger();
     }
     else if (driveMode == DriveMode::Static)
     {
       disable_drive();
       dome_spin();
       dome_servos();
-      sound_trigger();
+      check_sound_trigger();
     }
     else
     {
