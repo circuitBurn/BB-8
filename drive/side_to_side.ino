@@ -29,8 +29,6 @@ void side_to_side()
 
   Input2 = roll;
   Setpoint2 = constrain(Setpoint2, -S2S_MAX_ANGLE, S2S_MAX_ANGLE);
-  //  Pk2 = get_pk2();
-  //  PID2.SetTunings(Pk2, Ik2, Dk2);
   PID2.Compute();
 
   Setpoint1 = Output2;
@@ -72,4 +70,17 @@ int get_target_s2s(int val)
   {
     return map(val, RC_MIN, RC_MAX, -S2S_MAX_ANGLE, S2S_MAX_ANGLE);
   }
+}
+
+/**
+   Maps the S1 pot to the S2S stability's PID Proportional value
+*/
+double get_pk1()
+{
+  return mapfloat(sbus_rx.data().ch[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 0, 35);
+}
+
+float mapfloat(long x, long in_min, long in_max, long out_min, long out_max)
+{
+  return (float)(x - in_min) * (out_max - out_min) / (float)(in_max - in_min) + out_min;
 }

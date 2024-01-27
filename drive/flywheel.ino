@@ -28,3 +28,8 @@ void flywheel()
   }
 
 }
+
+bool in_rc_deadband(int value)
+{
+  return value >= RC_DEADBAND_LOW && value <= RC_DEADBAND_HIGH;
+}

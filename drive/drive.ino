@@ -7,7 +7,7 @@
       @circuitBurn
 
    Pin Mapping:
-      TODO:
+      See "constants.h"
 
    Serial Ports:
       Serial1 - DFPlayer Mini
@@ -30,10 +30,8 @@
 #include <Adafruit_BNO055.h>
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
-
 #include "constants.h"
 #include "enums.h"
-//#include "offsets.h"
 
 // PID1 is for the side to side tilt
 double Pk1 = 24;
@@ -81,29 +79,17 @@ BTS7960 flywheelController(DRIVE_EN_PIN, FLYWHEEL_L_PWM_PIN, FLYWHEEL_R_PWM_PIN)
 Adafruit_BNO055 bno = Adafruit_BNO055(-1, 0x28);
 float pitch, roll;
 
-// S2S pot smoothing
-//const int numReadings = 4;
-//int readings[numReadings] = { 510, 510, 510, 510 };
-//int readIndex = 0;
-//int total = 0;
-//int average = 0;
-
+// Drive mode
 DriveMode driveMode = DriveMode::Disabled;
 
 // Specifies the direction of BB-8
 DriveDirection driveDirection = DriveDirection::Forward;
-
-//Offsets offsets = Offsets();
 
 void setup()
 {
   sbus_rx.Begin();
 
   randomSeed(analogRead(0));
-
-  // TODO: debug only
-//  offsets.set(1, -3);
-//  offsets.initialize();
 
   pinMode(DRIVE_R_PWM_PIN, OUTPUT);
   pinMode(DRIVE_L_PWM_PIN, OUTPUT);
@@ -160,8 +146,6 @@ void setup()
   // Servos
   servos.begin();
   servos.setPWMFreq(60);
-  //  servos.writeMicroseconds(13, 1500);
-  //  servos.writeMicroseconds(14, 1500);
 }
 
 void loop()
@@ -196,4 +180,54 @@ void loop()
       disable_drive();
     }
   }
+}
+
+/**
+ * @returns DriveMode
+*/
+DriveMode get_drive_mode()
+{
+  int driveVal = sbus_rx.data().ch[CH_DRIVE_EN];
+  if (driveVal == RC_MIN)
+  {
+    return DriveMode::Enabled;
+  }
+  else if (driveVal == RC_MID)
+  {
+    return DriveMode::Static;
+  }
+  else
+  {
+    return DriveMode::Disabled;
+  }
+}
+
+/**
+ * Drive can be "reversed" to make a quick turnaround
+*/
+DriveDirection get_drive_direction()
+{
+  int val = sbus_rx.data().ch[CH_DIRECTION];
+  if (val < RC_MAX)
+  {
+    return DriveDirection::Forward;
+  }
+  else
+  {
+    return DriveDirection::Reverse;
+  }
+}
+
+void disable_drive()
+{
+  flywheelController.Disable();
+  s2sController.Disable();
+  driveController.Disable();
+}
+
+void enable_drive()
+{
+  flywheelController.Enable();
+  s2sController.Enable();
+  driveController.Enable();
 }

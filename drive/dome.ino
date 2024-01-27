@@ -74,12 +74,12 @@ void dome_servos()
     targetNod = get_target_dome_nod(ch3);
 
     // TODO: pitch correction
-//    targetNod = targetNod + (pitch * 4.5);
+    //    targetNod = targetNod + (pitch * 4.5);
 
     diffNod = targetNod - currentNod;
 
     // Avoid any strange zero condition
-    if ( diffNod != 0.00 )
+    if (diffNod != 0.00)
     {
       currentNod += diffNod * NOD_EASING;
     }
@@ -94,7 +94,7 @@ void dome_servos()
     diffSide = targetSide - currentSide;
 
     // Avoid any strange zero condition
-    if ( diffSide != 0.00 )
+    if (diffSide != 0.00)
     {
       currentSide += diffSide * TILT_EASING;
     }
@@ -117,8 +117,34 @@ void dome_servos()
   }
   else
   {
-//    Serial.println("Dome movement is disabled");
+    //    Serial.println("Dome movement is disabled");
   }
+}
+
+/**
+   ReadIMU
+
+   Leaning forward = +y
+   Tilting left    = -z
+
+   Pitch is leaning forwards/backwards - Y axis
+   Roll is leaning sideways - Z axis
+*/
+void readIMU()
+{
+  imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  pitch = euler.y();
+  roll = euler.z();
+}
+
+bool is_dome_rotation_enabled()
+{
+  return true; // driveMode == DriveMode::Enabled || driveMode == DriveMode::Static;
+}
+
+bool is_dome_movement_enabled()
+{
+  return driveMode == DriveMode::Enabled || driveMode == DriveMode::Static;
 }
 
 int get_target_dome_rotation(int val)
