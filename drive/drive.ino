@@ -29,7 +29,6 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <Wire.h>
-#include <Adafruit_PWMServoDriver.h>
 #include "constants.h"
 #include "enums.h"
 
@@ -60,9 +59,6 @@ double Ik4 = 0.1;
 double Dk4 = 0.01;
 double Setpoint4, Input4, Output4;
 PID PID4(&Input4, &Output4, &Setpoint4, Pk4, Ik4, Dk4, DIRECT);
-
-// Dome Servos
-Adafruit_PWMServoDriver servos = Adafruit_PWMServoDriver();
 
 // SBUS
 bfs::SbusRx sbus_rx(&Serial2);
@@ -142,10 +138,6 @@ void setup()
   myDFPlayer.begin(Serial1);
   myDFPlayer.volume(30);
   myDFPlayer.play(1);
-
-  // Servos
-  servos.begin();
-  servos.setPWMFreq(60);
 }
 
 void loop()
@@ -164,14 +156,12 @@ void loop()
       flywheel();
       side_to_side();
       dome_spin();
-      dome_servos();
       check_sound_trigger();
     }
     else if (driveMode == DriveMode::Static)
     {
       disable_drive();
       dome_spin();
-      dome_servos();
       check_sound_trigger();
     }
     else

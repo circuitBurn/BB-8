@@ -20,11 +20,12 @@
 // - Ex: CH1 on Tx is 0 here, CH2 is 1
 /*****************************************************************************/
 #define CH_DRIVE_MAIN 0
-#define CH_DOME_TILT_X 1
-#define CH_DOME_TILT_Y 2
+// 1: Channel 2 is directly connected to dome servo
+// 2: Channel 3 is directly connected to dome servo 
 #define CH_DRIVE_S2S 3
 #define CH_FLYWHEEL 4
 #define CH_DOME_SPIN 5
+// 6: Channel 7 is the RC relay
 #define CH_SOUND_TRIGGER 7
 #define CH_SOUND_BANK 8
 #define CH_DRIVE_EN 9
@@ -57,7 +58,7 @@
 #define S2S_POT_PIN A0
 #define S2S_MAX_ANGLE 40
 #define S2S_EASING 0.9
-//#define S2S_OFFSET 20 // Negative value here will tilt the drive to the right
+#define S2S_OFFSET 30 // Negative value here will tilt the drive to the right
 
 /*****************************************************************************/
 // Dome servos and spin motor
@@ -65,8 +66,6 @@
 #define DOME_SPIN_A_PIN 10
 #define DOME_SPIN_B_PIN 11
 #define DOME_POT_PIN A4
-#define NOD_EASING 0.04
-#define TILT_EASING 0.04
-#define DOME_SPIN_SPEED 200 // 0 - 255
+#define DOME_SPIN_SPEED 125 // 0 - 255 for spinning completely around
+#define DOME_TURN_SPEED 100 // 0 - 255 for looking around
 #define DOME_POT_OFFSET -60
-#define MAX_DOME_S2S_ANGLE 72

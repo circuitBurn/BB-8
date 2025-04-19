@@ -32,6 +32,7 @@ void check_sound_trigger()
         int soundBankRaw = sbus_rx.data().ch[CH_SOUND_BANK];
         int soundBank = map(soundBankRaw, 172, 1811, 0, 2);
         int soundIndex = (soundBank * 10) + buttonIndex;
+        // TODO: if the button index is top right, play rnadom from this bank
         myDFPlayer.play(soundIndex);
       }
       else if (soundTriggerLatched && buttonIndex == -1)

@@ -10,7 +10,7 @@ void side_to_side()
 
   // Get the s2s offset from the right slider
   s2s_offset = sbus_rx.data().ch[CH_S2S_OFFSET];
-  s2s_offset = map(s2s_offset, RC_MIN, RC_MAX, -10, 50);
+  s2s_offset = map(s2s_offset, RC_MIN, RC_MAX, -25, 50) + S2S_OFFSET;
 
   s2s_target_position = get_target_s2s(ch2);
 
