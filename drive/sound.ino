@@ -7,7 +7,7 @@ unsigned long debounceDelay = 75;
 /**
    Debounce self-resetting toggle switch and play a single sound.
 */
-void check_sound_trigger()
+void checkAudioTrigger()
 {
   int buttonIndex = get_sound_index();
 

@@ -146,36 +146,62 @@ void loop()
 
   if (sbus_rx.Read())
   {
-    driveMode = get_drive_mode();
-    driveDirection = get_drive_direction();
+    driveMode = getDriveMode();
+    driveDirection = getDriveDirection();
 
     if (driveMode == DriveMode::Enabled)
     {
-      enable_drive();
-      main_drive();
+      enableDrive();
+      mainDrive();
       flywheel();
-      side_to_side();
-      dome_spin();
-      check_sound_trigger();
+      sideToSide();
+      domeSpin();
+      checkAudioTrigger();
     }
     else if (driveMode == DriveMode::Static)
     {
-      disable_drive();
-      dome_spin();
-      check_sound_trigger();
+      disableDrive();
+      domeSpin();
+      checkAudioTrigger();
     }
     else
     {
       // Disabled
-      disable_drive();
+      disableDrive();
     }
   }
 }
 
 /**
- * @returns DriveMode
+   ReadIMU
+
+   Leaning forward = +y
+   Tilting left    = -z
+
+   Pitch is leaning forwards/backwards - Y axis
+   Roll is leaning sideways - Z axis
 */
-DriveMode get_drive_mode()
+void readIMU()
+{
+  imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  pitch = euler.y();
+  roll = euler.z();
+}
+
+bool inRcDeadband(int value)
+{
+  return value >= RC_DEADBAND_LOW && value <= RC_DEADBAND_HIGH;
+}
+
+float mapFloat(long x, long in_min, long in_max, long out_min, long out_max)
+{
+  return (float)(x - in_min) * (out_max - out_min) / (float)(in_max - in_min) + out_min;
+}
+
+/**
+ * @returns DriveMode
+ */
+DriveMode getDriveMode()
 {
   int driveVal = sbus_rx.data().ch[CH_DRIVE_EN];
   if (driveVal == RC_MIN)
@@ -194,8 +220,8 @@ DriveMode get_drive_mode()
 
 /**
  * Drive can be "reversed" to make a quick turnaround
-*/
-DriveDirection get_drive_direction()
+ */
+DriveDirection getDriveDirection()
 {
   int val = sbus_rx.data().ch[CH_DIRECTION];
   if (val < RC_MAX)
@@ -208,14 +234,14 @@ DriveDirection get_drive_direction()
   }
 }
 
-void disable_drive()
+void disableDrive()
 {
   flywheelController.Disable();
   s2sController.Disable();
   driveController.Disable();
 }
 
-void enable_drive()
+void enableDrive()
 {
   flywheelController.Enable();
   s2sController.Enable();
