@@ -11,7 +11,7 @@ void flywheel()
   flywheelSpeed = map(flywheelRaw, RC_MIN, RC_MAX, 255, -255);
   flywheelEnabled = sbus_rx.data().ch[CH_FLYWHEEL_EN] == RC_MAX;
 
-  if (!flywheelEnabled || in_rc_deadband(flywheelRaw))
+  if (!flywheelEnabled || inRcDeadband(flywheelRaw))
   {
     flywheelController.Stop();
   }
@@ -26,10 +26,4 @@ void flywheel()
       flywheelController.TurnLeft(flywheelSpeed);
     }
   }
-
-}
-
-bool in_rc_deadband(int value)
-{
-  return value >= RC_DEADBAND_LOW && value <= RC_DEADBAND_HIGH;
 }

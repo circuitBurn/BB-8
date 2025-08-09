@@ -3,10 +3,10 @@ int driveRaw, driveSpeed;
 /**
    Forwards and backwards
 */
-void main_drive()
+void mainDrive()
 {
   driveRaw = sbus_rx.data().ch[CH_DRIVE_MAIN];
-  driveSpeed = get_drive_speed(driveRaw);
+  driveSpeed = getDriveSpeed(driveRaw);
 
   Setpoint3 = constrain(driveSpeed, -MAX_DRIVE_SPEED, MAX_DRIVE_SPEED);
   Input3 = pitch;
@@ -31,7 +31,7 @@ void main_drive()
 /**
  * Returns the drive speed oriented to the specified "drive direction"
  */
-int get_drive_speed(int driveSpeedRaw)
+int getDriveSpeed(int driveSpeedRaw)
 {
   if (driveDirection == DriveDirection::Forward)
   { 

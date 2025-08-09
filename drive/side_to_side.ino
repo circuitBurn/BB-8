@@ -4,15 +4,15 @@ int s2s_target_position;
 int s2s_position_difference;
 double s2s_offset;
 
-void side_to_side()
+void sideToSide()
 {
   ch2 = sbus_rx.data().ch[CH_DRIVE_S2S];
 
   // Get the s2s offset from the right slider
   s2s_offset = sbus_rx.data().ch[CH_S2S_OFFSET];
-  s2s_offset = map(s2s_offset, RC_MIN, RC_MAX, -25, 50) + S2S_OFFSET;
+  s2s_offset = map(s2s_offset, RC_MIN, RC_MAX, -25, 60) + S2S_OFFSET;
 
-  s2s_target_position = get_target_s2s(ch2);
+  s2s_target_position = getTargetS2S(ch2);
 
   // Calculate error
   s2s_position_difference = s2s_target_position - s2s_current_position;
@@ -40,7 +40,7 @@ void side_to_side()
   Setpoint1 = map(Setpoint1, S2S_MAX_ANGLE, -S2S_MAX_ANGLE, -S2S_MAX_ANGLE, S2S_MAX_ANGLE);
 
   // Update PK1 from RC control
-  Pk1 = get_pk1();
+  Pk1 = getPk1();
   PID1.SetTunings(Pk1, Ik1, Dk1);
   PID1.Compute();
 
@@ -60,7 +60,7 @@ void side_to_side()
   }
 }
 
-int get_target_s2s(int val)
+int getTargetS2S(int val)
 {
   if (driveDirection == DriveDirection::Forward)
   {
@@ -75,12 +75,7 @@ int get_target_s2s(int val)
 /**
    Maps the S1 pot to the S2S stability's PID Proportional value
 */
-double get_pk1()
+double getPk1()
 {
-  return mapfloat(sbus_rx.data().ch[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 0, 35);
-}
-
-float mapfloat(long x, long in_min, long in_max, long out_min, long out_max)
-{
-  return (float)(x - in_min) * (out_max - out_min) / (float)(in_max - in_min) + out_min;
+  return mapFloat(sbus_rx.data().ch[CH_ROLL_OFFSET], RC_MIN, RC_MAX, 0, 35);
 }
