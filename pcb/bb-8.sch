@@ -10289,6 +10289,10 @@ DIN A3, landscape with location and doc. field</description>
 </nets>
 </sheet>
 </sheets>
+<errors>
+<approved hash="113,1,114.021,97.2464,SBUS,,,,,"/>
+<approved hash="113,1,193.571,130.071,FRAME1,,,,,"/>
+</errors>
 </schematic>
 </drawing>
 <compatibility>
